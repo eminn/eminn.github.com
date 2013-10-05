@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <title>Hazelcast Documentation</title>
+
+    <link type="text/css" rel="stylesheet" href="assets/css/reset.css">
+    <link type="text/css" rel="stylesheet" href="http://yandex.st/highlightjs/6.1/styles/sunburst.min.css">
+    <link type="text/css" rel="stylesheet" href="assets/css/docs.css">
+    <link type="text/css" rel="stylesheet" href="assets/css/print.css" media="print">
+    
+
+    <script type="text/javascript" src="assets/js/jquery-1.10.1.min.js"></script>
+    <script type="text/javascript" src="http://yandex.st/highlightjs/6.1/highlight.min.js"></script>
+    <script type="text/javascript" src="assets/js/lunr.min.js"></script>
+
+    
+
+    <script type="text/javascript">var BASE_URL = "";</script>
+    <script type="text/javascript" src="assets/js/viewer.js"></script>
+
+    
+</head>
+<body>
+    <div id="page">
+        <a name="top" />
+        <header id="header">
+            <h1><a href="">Hazelcast Documentation</a></h1>
+        </header>
+        
+
+<div id="sidebar">
+    <form action="search.html"><input id="search" type="text" placeholder="Search" name="q" /></form>
+    <nav id="toc">
+        
+    <ol>
+    
+        <li>
+            <a href="test.html#introduction">Introduction</a>
+            
+                
+    <ol>
+    
+        <li>
+            <a href="test.html#whats-new-in-30">What's new in 3.0?</a>
+            
+                
+    <ol>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#upgrading-from-2x-versions">Upgrading from 2.x versions</a>
+            
+                
+    <ol>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#getting-started-tutorial">Getting Started (Tutorial)</a>
+            
+                
+    <ol>
+    
+</ol>
+
+            
+        </li>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#distributed-data-structures">Distributed Data Structures</a>
+            
+                
+    <ol>
+    
+        <li>
+            <a href="test.html#distributed-map">Distributed Map</a>
+            
+                
+    <ol>
+    
+        <li>
+            <a href="test.html#entry-statistics">Entry Statistics</a>
+            
+        </li>
+    
+        <li>
+            <a href="test.html#in-memory-format">In Memory Format</a>
+            
+        </li>
+    
+        <li>
+            <a href="test.html#backups">Backups</a>
+            
+        </li>
+    
+        <li>
+            <a href="test.html#eviction">Eviction</a>
+            
+        </li>
+    
+        <li>
+            <a href="test.html#persistence">Persistence</a>
+            
+        </li>
+    
+        <li>
+            <a href="test.html#query">Query</a>
+            
+        </li>
+    
+        <li>
+            <a href="test.html#indexing">Indexing</a>
+            
+        </li>
+    
+        <li>
+            <a href="test.html#continuous-query">Continuous Query</a>
+            
+        </li>
+    
+        <li>
+            <a href="test.html#entry-processor">Entry Processor</a>
+            
+        </li>
+    
+        <li>
+            <a href="test.html#near-cache">Near Cache</a>
+            
+        </li>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#distributed-queue">Distributed Queue</a>
+            
+                
+    <ol>
+    
+        <li>
+            <a href="test.html#persistence">Persistence</a>
+            
+        </li>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#distributed-multimap">Distributed MultiMap</a>
+            
+                
+    <ol>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#distributed-topic">Distributed Topic</a>
+            
+                
+    <ol>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#distributed-set">Distributed Set</a>
+            
+                
+    <ol>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#distributed-list">Distributed List</a>
+            
+                
+    <ol>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#distributed-lock">Distributed Lock</a>
+            
+                
+    <ol>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#distributed-events">Distributed Events</a>
+            
+                
+    <ol>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#data-serializable">Data Serializable</a>
+            
+                
+    <ol>
+    
+</ol>
+
+            
+        </li>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#data-affinity">Data Affinity</a>
+            
+                
+    <ol>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#monitoring-with-jmx">Monitoring with JMX</a>
+            
+                
+    <ol>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#cluster-utilities">Cluster Utilities</a>
+            
+                
+    <ol>
+    
+        <li>
+            <a href="test.html#cluster-interface">Cluster Interface</a>
+            
+                
+    <ol>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#cluster-wide-id-generator">Cluster-wide Id Generator</a>
+            
+                
+    <ol>
+    
+</ol>
+
+            
+        </li>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#transactions">Transactions</a>
+            
+                
+    <ol>
+    
+        <li>
+            <a href="test.html#transaction-interface">Transaction Interface</a>
+            
+                
+    <ol>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#j2ee-integration">J2EE Integration</a>
+            
+                
+    <ol>
+    
+</ol>
+
+            
+        </li>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#distributed-executor-service">Distributed Executor Service</a>
+            
+                
+    <ol>
+    
+        <li>
+            <a href="test.html#execution-callback">Execution Callback</a>
+            
+                
+    <ol>
+    
+</ol>
+
+            
+        </li>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#http-session-clustering-with-hazelcastwm">Http Session Clustering with HazelcastWM</a>
+            
+                
+    <ol>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#wan-replication">WAN Replication</a>
+            
+                
+    <ol>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#configuration">Configuration</a>
+            
+                
+    <ol>
+    
+        <li>
+            <a href="test.html#network-configuration">Network Configuration</a>
+            
+                
+    <ol>
+    
+        <li>
+            <a href="test.html#configuring-tcpip-cluster">Configuring TCP/IP Cluster</a>
+            
+        </li>
+    
+        <li>
+            <a href="test.html#specifying-network-interfaces">Specifying Network Interfaces</a>
+            
+        </li>
+    
+        <li>
+            <a href="test.html#network-partitioning-split-brain-syndrome">Network Partitioning (Split-Brain Syndrome)</a>
+            
+        </li>
+    
+        <li>
+            <a href="test.html#ssl">SSL</a>
+            
+        </li>
+    
+        <li>
+            <a href="test.html#encryption">Encryption</a>
+            
+        </li>
+    
+        <li>
+            <a href="test.html#socket-interceptor">Socket Interceptor</a>
+            
+        </li>
+    
+        <li>
+            <a href="test.html#ipv6-support">IPv6 Support</a>
+            
+        </li>
+    
+        <li>
+            <a href="test.html#restricting-outbound-ports">Restricting Outbound Ports</a>
+            
+        </li>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#listener-configurations">Listener Configurations</a>
+            
+                
+    <ol>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#logging-configuration">Logging Configuration</a>
+            
+                
+    <ol>
+    
+</ol>
+
+            
+        </li>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#hibernate-second-level-cache">Hibernate Second Level Cache</a>
+            
+                
+    <ol>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#spring-integration">Spring Integration</a>
+            
+                
+    <ol>
+    
+        <li>
+            <a href="test.html#configuration">Configuration</a>
+            
+                
+    <ol>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#spring-managed-context">Spring Managed Context</a>
+            
+                
+    <ol>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#spring-cache">Spring Cache</a>
+            
+                
+    <ol>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#hibernate-2nd-level-cache-config">Hibernate 2nd Level Cache Config</a>
+            
+                
+    <ol>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#spring-data-jpa">Spring Data - JPA</a>
+            
+                
+    <ol>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#spring-data-mongodb">Spring Data - MongoDB</a>
+            
+                
+    <ol>
+    
+</ol>
+
+            
+        </li>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#clients">Clients</a>
+            
+                
+    <ol>
+    
+        <li>
+            <a href="test.html#native-client">Native Client</a>
+            
+                
+    <ol>
+    
+        <li>
+            <a href="test.html#java-client">Java Client</a>
+            
+        </li>
+    
+        <li>
+            <a href="test.html#csharp-client-supenterprise-edition-onlysup">CSharp Client &lt;sup&gt;(Enterprise Edition Only)&lt;/sup&gt;</a>
+            
+        </li>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#memcache-client">Memcache Client</a>
+            
+                
+    <ol>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#rest-client">Rest Client</a>
+            
+                
+    <ol>
+    
+</ol>
+
+            
+        </li>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#management-center">Management Center</a>
+            
+                
+    <ol>
+    
+        <li>
+            <a href="test.html#introduction">Introduction</a>
+            
+                
+    <ol>
+    
+        <li>
+            <a href="test.html#installation">Installation</a>
+            
+        </li>
+    
+        <li>
+            <a href="test.html#user-administration">User Administration</a>
+            
+        </li>
+    
+        <li>
+            <a href="test.html#tool-overview">Tool Overview</a>
+            
+        </li>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#maps">Maps</a>
+            
+                
+    <ol>
+    
+        <li>
+            <a href="test.html#monitoring-maps">Monitoring Maps</a>
+            
+        </li>
+    
+        <li>
+            <a href="test.html#map-browser">Map Browser</a>
+            
+        </li>
+    
+        <li>
+            <a href="test.html#map-configuration">Map Configuration</a>
+            
+        </li>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#queues">Queues</a>
+            
+                
+    <ol>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#topics">Topics</a>
+            
+                
+    <ol>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#members">Members</a>
+            
+                
+    <ol>
+    
+        <li>
+            <a href="test.html#monitoring">Monitoring</a>
+            
+        </li>
+    
+        <li>
+            <a href="test.html#operations">Operations</a>
+            
+        </li>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#system-logs">System Logs</a>
+            
+                
+    <ol>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#scripting">Scripting</a>
+            
+                
+    <ol>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#time-travel">Time Travel</a>
+            
+                
+    <ol>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#console">Console</a>
+            
+                
+    <ol>
+    
+</ol>
+
+            
+        </li>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#miscellaneous">Miscellaneous</a>
+            
+                
+    <ol>
+    
+        <li>
+            <a href="test.html#common-gotchas">Common Gotchas</a>
+            
+                
+    <ol>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#testing-cluster">Testing Cluster</a>
+            
+                
+    <ol>
+    
+</ol>
+
+            
+        </li>
+    
+        <li>
+            <a href="test.html#planned-features">Planned Features</a>
+            
+                
+    <ol>
+    
+</ol>
+
+            
+        </li>
+    
+</ol>
+
+            
+        </li>
+    
+</ol>
+
+    </nav>
+    
+    <nav id="links">
+        <ul>
+            
+        </ul>
+    </nav>
+    
+</div>
+
+        <div id="content">
+            <h2>Search results for "<span id="search-q"></span>"</h2>
+<ul id="search-results"></ul>
+<script type="text/javascript" src="lunr-index.js"></script>
+<script type="text/javascript">
+    function getParameterByName(name) {
+        name = name.replace(/[\[]/, "\\\[").replace(/[\]]/, "\\\]");
+        var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+            results = regex.exec(location.search);
+        return results == null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+    }
+
+    $(function() {
+        var q = getParameterByName('q'), 
+            ul = $('#search-results').empty(),
+            results = index.search(q);
+
+        $('#search-q').text(q);
+        if (results.length > 0) {
+            for (var i = 0; i < results.length; i++) {
+                ul.append($('<li><a href="' + results[i].ref + '">' + documentTitles[results[i].ref] + '</a></li>'));
+            }
+        } else {
+            ul.append($('<li class="no-results">No results found</li>'));
+        }
+    })
+</script>
+
+        </div>
+        <footer id="footer">
+            Powered by <a href="http://github.com/maximebf/beautiful-docs">beautiful-docs</a> -
+            <a href="#top">Back to top</a> - <a href="all.html">Everything on a single page</a>
+            - <a href="?print=1">Print current page</a> - <a href="all.html?print=1">Print all pages</a>
+            
+        </footer>
+    </div>
+</body>
+</html>
