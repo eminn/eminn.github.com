@@ -949,52 +949,90 @@
 </div>
 
         <div id="content">
-            <a name="introduction"></a><h1>Introduction</h1>
-<p>Hazelcast is a clustering and highly scalable data distribution platform for Java. Hazelcast helps architects and developers to easily design and develop faster, highly scalable and reliable applications for their businesses.</p>
+            <a name="getting-started-tutorial"></a><h2>Getting Started (Tutorial)</h2>
+<p>In this short tutorial, we will create simple Java application using Hazelcast distributed map and queue. Then we will run our application twice to have two nodes (JVMs) clustered and finalize this tutorial with connecting to our cluster from another Java application by using Hazelcast Native Java Client API.</p>
 <ul>
-<li><p>Distributed implementations of <code>java.util.{Queue, Set, List, Map}</code></p>
+<li><p>Download the latest <a href="http://www.hazelcast.com/downloads.jsp">Hazelcast zip</a>.</p>
 </li>
-<li><p>Distributed implementation of <code>java.util.concurrent.ExecutorService</code></p>
+<li><p>Unzip it and add the <code>lib/hazelcast.jar</code> to your class path.</p>
 </li>
-<li><p>Distributed implementation of <code>java.util.concurrency.locks.Lock</code></p>
+<li><p>Create a Java class and import Hazelcast libraries.</p>
 </li>
-<li><p>Distributed <code>Topic</code> for publish/subscribe messaging</p>
-</li>
-<li><p>Transaction support and J2EE container integration via JCA</p>
-</li>
-<li><p>Distributed listeners and events</p>
-</li>
-<li><p>Support for cluster info and membership events</p>
-</li>
-<li><p>Dynamic HTTP session clustering</p>
-</li>
-<li><p>Dynamic clustering</p>
-</li>
-<li><p>Dynamic scaling to hundreds of servers</p>
-</li>
-<li><p>Dynamic partitioning with backups</p>
-</li>
-<li><p>Dynamic fail-over</p>
-</li>
-<li><p>Super simple to use; include a single jar</p>
-</li>
-<li><p>Super fast; thousands of operations per sec.</p>
-</li>
-<li><p>Super small; less than a MB</p>
-</li>
-<li><p>Super efficient; very nice to CPU and RAM</p>
+<li><p>Following code will start the first node and create and use <code>customers</code> map and queue.</p>
 </li>
 </ul>
-<p>To install Hazelcast:</p>
+<pre><code class="lang-java">import com.hazelcast.core.Hazelcast;
+import java.util.Map;
+import java.util.Queue;
+
+public class GettingStarted {
+
+    public static void main(String[] args) {
+        Config cfg = new Config();
+        HazelcastInstance instance = Hazelcast.newHazelcastInstance(cfg);
+        Map&lt;Integer, String&gt; mapCustomers = instance.getMap(&quot;customers&quot;);
+        mapCustomers.put(1, &quot;Joe&quot;);
+        mapCustomers.put(2, &quot;Ali&quot;);
+        mapCustomers.put(3, &quot;Avi&quot;);
+
+        System.out.println(&quot;Customer with key 1: &quot;+ mapCustomers.get(1));
+        System.out.println(&quot;Map Size:&quot; + mapCustomers.size());
+
+        Queue&lt;String&gt; queueCustomers = instance.getQueue(&quot;customers&quot;);
+        queueCustomers.offer(&quot;Tom&quot;);
+        queueCustomers.offer(&quot;Mary&quot;);
+        queueCustomers.offer(&quot;Jane&quot;);
+        System.out.println(&quot;First customer: &quot; + queueCustomers.poll());
+        System.out.println(&quot;Second customer: &quot;+ queueCustomers.peek());
+        System.out.println(&quot;Queue size: &quot; + queueCustomers.size());
+    }
+}</code></pre>
 <ul>
-<li><p>Download hazelcast-_version_.zip from <a href="http://www.hazelcast.com">www.hazelcast.com</a></p>
+<li><p>Run this class second time to get the second node started.</p>
 </li>
-<li><p>Unzip hazelcast-_version_.zip file</p>
-</li>
-<li><p>Add hazelcast.jar file into your classpath</p>
+<li><p>Have you seen they formed a cluster? You should see something like this:</p>
 </li>
 </ul>
-<p>Hazelcast is pure Java. JVMs that are running Hazelcast will dynamically cluster. Although by default Hazelcast will use multicast for discovery, it can also be configured to only use TCP/IP for environments where multicast is not available or preferred (<a href="#configuring-tcpip-cluster">Click here for more info</a>). Communication among cluster members is always TCP/IP with Java NIO beauty. Default configuration comes with 1 backup so if one node fails, no data will be lost. It is as simple as using<code>java.util.{Queue, Set, List, Map}</code>. Just add the hazelcast.jar into your classpath and start coding.</p>
+<pre><code>Members [2] {
+    Member [127.0.0.1:5701]
+    Member [127.0.0.1:5702] this
+}</code></pre>
+<p><strong>Connecting Hazelcast Cluster with Java Client API</strong></p>
+<ul>
+<li><p>Besides <code>hazelcast.jar</code> you should also add <code>hazelcast-client.jar</code> to your classpath.</p>
+</li>
+<li><p>Following code will start a Hazelcast Client, connect to our two node cluster and print the size of our <code>customers</code> map.</p>
+</li>
+</ul>
+<pre><code class="lang-java">package com.hazelcast.test;
+
+import com.hazelcast.client.config.ClientConfig;
+import com.hazelcast.client.HazelcastClient;
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.IMap;
+
+public class GettingStartedClient {
+
+    public static void main(String[] args) {
+        ClientConfig clientConfig = new ClientConfig();
+        clientConfig.addAddress(&quot;127.0.0.1:5701&quot;);
+        HazelcastInstance client = HazelcastClient.newHazelcastClient(clientConfig);
+        IMap map = client.getMap(&quot;customers&quot;);
+        System.out.println(&quot;Map Size:&quot; + map.size());
+    }
+}</code></pre>
+<ul>
+<li>When you run it, you will see the client properly connects to the cluster and print the map size as 3.</li>
+</ul>
+<p><strong>What is Next?</strong></p>
+<ul>
+<li><p>You can browse <a href="http://www.hazelcast.com/docs.jsp">documentation</a> and resources for detailed features and examples.</p>
+</li>
+<li><p>You can email your questions to Hazelcast <a href="http://groups.google.com/group/hazelcast">mail group</a>.</p>
+</li>
+<li><p>You can browse Hazelcast <a href="https://github.com/hazelcast/hazelcast">source code</a>.</p>
+</li>
+</ul>
 
 
 

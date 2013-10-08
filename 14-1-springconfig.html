@@ -949,52 +949,183 @@
 </div>
 
         <div id="content">
-            <a name="introduction"></a><h1>Introduction</h1>
-<p>Hazelcast is a clustering and highly scalable data distribution platform for Java. Hazelcast helps architects and developers to easily design and develop faster, highly scalable and reliable applications for their businesses.</p>
+            <a name="configuration"></a><h2>Configuration</h2>
+<p>You can declare Hazelcast beans for Spring context using <em>beans</em> namespace (default spring <em>beans</em> namespace) as well to declare hazelcast maps, queues and others. <strong>Hazelcast-Spring integration requires either hazelcast-spring jar or hazelcast-all jar in the classpath.</strong></p>
+<pre><code class="lang-xml">&lt;bean id=&quot;instance&quot; class=&quot;com.hazelcast.core.Hazelcast&quot; factory-method=&quot;newHazelcastInstance&quot;&gt;
+    &lt;constructor-arg&gt;
+        &lt;bean class=&quot;com.hazelcast.config.Config&quot;&gt;
+            &lt;property name=&quot;groupConfig&quot;&gt;
+                &lt;bean class=&quot;com.hazelcast.config.GroupConfig&quot;&gt;
+                    &lt;property name=&quot;name&quot; value=&quot;dev&quot;/&gt;
+                    &lt;property name=&quot;password&quot; value=&quot;pwd&quot;/&gt;
+                &lt;/bean&gt;
+            &lt;/property&gt;
+            &lt;!-- and so on ... --&gt;
+        &lt;/bean&gt;
+    &lt;/constructor-arg&gt;
+&lt;/bean&gt;
+
+&lt;bean id=&quot;map&quot; factory-bean=&quot;instance&quot; factory-method=&quot;getMap&quot;&gt;
+    &lt;constructor-arg value=&quot;map&quot;/&gt;
+&lt;/bean&gt;</code></pre>
+<p>Hazelcast has Spring integration (requires version 2.5 or greater) since 1.9.1 using <em>hazelcast</em> namespace.</p>
 <ul>
-<li><p>Distributed implementations of <code>java.util.{Queue, Set, List, Map}</code></p>
+<li>Add namespace <em>xmlns:hz=&quot;<a href="http://www.hazelcast.com/schema/spring">http://www.hazelcast.com/schema/spring</a>&quot;</em> to beans tag in context file:</li>
+</ul>
+<pre><code class="lang-xml">&lt;beans xmlns=&quot;http://www.springframework.org/schema/beans&quot;
+       xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;
+       xmlns:hz=&quot;http://www.hazelcast.com/schema/spring&quot;
+       xsi:schemaLocation=&quot;http://www.springframework.org/schema/beans
+                http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+                http://www.hazelcast.com/schema/spring
+                http://www.hazelcast.com/schema/spring/hazelcast-spring-3.0.xsd&quot;&gt;</code></pre>
+<ul>
+<li>Use <em>hz</em> namespace shortcuts to declare cluster, its items and so on.</li>
+</ul>
+<p>After that you can configure Hazelcast instance (node):</p>
+<pre><code class="lang-xml">&lt;hz:hazelcast id=&quot;instance&quot;&gt;
+    &lt;hz:config&gt;
+        &lt;hz:group name=&quot;dev&quot; password=&quot;password&quot;/&gt;
+        &lt;hz:network port=&quot;5701&quot; port-auto-increment=&quot;false&quot;&gt;
+            &lt;hz:join&gt;
+                &lt;hz:multicast enabled=&quot;false&quot;
+                              multicast-group=&quot;224.2.2.3&quot;
+                              multicast-port=&quot;54327&quot;/&gt;
+                &lt;hz:tcp-ip enabled=&quot;true&quot;&gt;
+                    &lt;hz:members&gt;10.10.1.2, 10.10.1.3&lt;/hz:members&gt;
+                &lt;/hz:tcp-ip&gt;
+            &lt;/hz:join&gt;
+        &lt;/hz:network&gt;
+        &lt;hz:map name=&quot;map&quot;
+                backup-count=&quot;2&quot;
+                max-size=&quot;0&quot;
+                eviction-percentage=&quot;30&quot;
+                read-backup-data=&quot;true&quot;
+                cache-value=&quot;true&quot;
+                eviction-policy=&quot;NONE&quot;
+                merge-policy=&quot;com.hazelcast.map.merge.PassThroughMergePolicy&quot;/&gt;
+    &lt;/hz:config&gt;
+&lt;/hz:hazelcast&gt;</code></pre>
+<p>You can easily configure map-store and near-cache too. (For map-store you should set either <em>class-name</em> or <em>implementation</em> attribute.)</p>
+<pre><code class="lang-xml">&lt;hz:config&gt;
+    &lt;hz:map name=&quot;map1&quot;&gt;
+            &lt;hz:near-cache time-to-live-seconds=&quot;0&quot; max-idle-seconds=&quot;60&quot;
+               eviction-policy=&quot;LRU&quot; max-size=&quot;5000&quot;  invalidate-on-change=&quot;true&quot;/&gt;
+
+            &lt;hz:map-store enabled=&quot;true&quot; class-name=&quot;com.foo.DummyStore&quot;
+                write-delay-seconds=&quot;0&quot;/&gt;
+    &lt;/hz:map&gt;
+
+    &lt;hz:map name=&quot;map2&quot;&gt;
+            &lt;hz:map-store enabled=&quot;true&quot; implementation=&quot;dummyMapStore&quot;
+                write-delay-seconds=&quot;0&quot;/&gt;
+    &lt;/hz:map&gt;
+
+    &lt;bean id=&quot;dummyMapStore&quot; class=&quot;com.foo.DummyStore&quot; /&gt;
+&lt;/hz:config&gt;</code></pre>
+<p>It&#39;s possible to use placeholders instead of concrete values. For instance, use property file <em>app-default.properties</em> for group configuration:</p>
+<pre><code class="lang-xml">&lt;bean class=&quot;org.springframework.beans.factory.config.PropertyPlaceholderConfigurer&quot;&gt;
+    &lt;property name=&quot;locations&quot;&gt;
+        &lt;list&gt;
+            &lt;value&gt;classpath:/app-default.properties&lt;/value&gt;
+        &lt;/list&gt;
+    &lt;/property&gt;
+&lt;/bean&gt;
+
+&lt;hz:hazelcast id=&quot;instance&quot;&gt;
+    &lt;hz:config&gt;
+        &lt;hz:group
+            name=&quot;${cluster.group.name}&quot;
+            password=&quot;${cluster.group.password}&quot;/&gt;
+        &lt;!-- ... --&gt;
+    &lt;/hz:config&gt;
+&lt;/hz:hazelcast&gt;</code></pre>
+<p>Similar for client</p>
+<pre><code class="lang-xml">&lt;hz:client id=&quot;client&quot;
+    group-name=&quot;${cluster.group.name}&quot; group-password=&quot;${cluster.group.password}&quot;&gt;
+    &lt;hz:member&gt;10.10.1.2:5701&lt;/hz:member&gt;
+    &lt;hz:member&gt;10.10.1.3:5701&lt;/hz:member&gt;
+&lt;/hz:client&gt;</code></pre>
+<p>Hazelcast also supports <code>lazy-init</code>, <code>scope</code> and <code>depends-on</code> bean attributes.</p>
+<pre><code class="lang-xml">&lt;hz:hazelcast id=&quot;instance&quot; lazy-init=&quot;true&quot; scope=&quot;singleton&quot;&gt;
+    ...
+&lt;/hz:hazelcast&gt;
+
+&lt;hz:client id=&quot;client&quot; scope=&quot;prototype&quot; depends-on=&quot;instance&quot;&gt;
+    ...
+&lt;/hz:client&gt;</code></pre>
+<p>You can declare beans for the following Hazelcast objects:</p>
+<ul>
+<li><p>map</p>
 </li>
-<li><p>Distributed implementation of <code>java.util.concurrent.ExecutorService</code></p>
+<li><p>multiMap</p>
 </li>
-<li><p>Distributed implementation of <code>java.util.concurrency.locks.Lock</code></p>
+<li><p>queue</p>
 </li>
-<li><p>Distributed <code>Topic</code> for publish/subscribe messaging</p>
+<li><p>topic</p>
 </li>
-<li><p>Transaction support and J2EE container integration via JCA</p>
+<li><p>set</p>
 </li>
-<li><p>Distributed listeners and events</p>
+<li><p>list</p>
 </li>
-<li><p>Support for cluster info and membership events</p>
+<li><p>executorService</p>
 </li>
-<li><p>Dynamic HTTP session clustering</p>
+<li><p>idGenerator</p>
 </li>
-<li><p>Dynamic clustering</p>
+<li><p>atomicLong</p>
 </li>
-<li><p>Dynamic scaling to hundreds of servers</p>
+<li><p>semaphore</p>
 </li>
-<li><p>Dynamic partitioning with backups</p>
+<li><p>countDownLatch</p>
 </li>
-<li><p>Dynamic fail-over</p>
-</li>
-<li><p>Super simple to use; include a single jar</p>
-</li>
-<li><p>Super fast; thousands of operations per sec.</p>
-</li>
-<li><p>Super small; less than a MB</p>
-</li>
-<li><p>Super efficient; very nice to CPU and RAM</p>
+<li><p>lock</p>
 </li>
 </ul>
-<p>To install Hazelcast:</p>
-<ul>
-<li><p>Download hazelcast-_version_.zip from <a href="http://www.hazelcast.com">www.hazelcast.com</a></p>
-</li>
-<li><p>Unzip hazelcast-_version_.zip file</p>
-</li>
-<li><p>Add hazelcast.jar file into your classpath</p>
-</li>
-</ul>
-<p>Hazelcast is pure Java. JVMs that are running Hazelcast will dynamically cluster. Although by default Hazelcast will use multicast for discovery, it can also be configured to only use TCP/IP for environments where multicast is not available or preferred (<a href="#configuring-tcpip-cluster">Click here for more info</a>). Communication among cluster members is always TCP/IP with Java NIO beauty. Default configuration comes with 1 backup so if one node fails, no data will be lost. It is as simple as using<code>java.util.{Queue, Set, List, Map}</code>. Just add the hazelcast.jar into your classpath and start coding.</p>
+<p>Example:</p>
+<pre><code class="lang-xml">&lt;hz:map id=&quot;map&quot; instance-ref=&quot;client&quot; name=&quot;map&quot; lazy-init=&quot;true&quot; /&gt;
+&lt;hz:multiMap id=&quot;multiMap&quot; instance-ref=&quot;instance&quot; name=&quot;multiMap&quot; lazy-init=&quot;false&quot; /&gt;
+&lt;hz:queue id=&quot;queue&quot; instance-ref=&quot;client&quot; name=&quot;queue&quot; lazy-init=&quot;true&quot; depends-on=&quot;instance&quot;/&gt;
+&lt;hz:topic id=&quot;topic&quot; instance-ref=&quot;instance&quot; name=&quot;topic&quot; depends-on=&quot;instance, client&quot;/&gt;
+&lt;hz:set id=&quot;set&quot; instance-ref=&quot;instance&quot; name=&quot;set&quot; /&gt;
+&lt;hz:list id=&quot;list&quot; instance-ref=&quot;instance&quot; name=&quot;list&quot;/&gt;
+&lt;hz:executorService id=&quot;executorService&quot; instance-ref=&quot;client&quot; name=&quot;executorService&quot;/&gt;
+&lt;hz:idGenerator id=&quot;idGenerator&quot; instance-ref=&quot;instance&quot; name=&quot;idGenerator&quot;/&gt;
+&lt;hz:atomicLong id=&quot;atomicLong&quot; instance-ref=&quot;instance&quot; name=&quot;atomicLong&quot;/&gt;
+&lt;hz:semaphore id=&quot;semaphore&quot; instance-ref=&quot;instance&quot; name=&quot;semaphore&quot;/&gt;
+&lt;hz:countDownLatch id=&quot;countDownLatch&quot; instance-ref=&quot;instance&quot; name=&quot;countDownLatch&quot;/&gt;
+&lt;hz:lock id=&quot;lock&quot; instance-ref=&quot;instance&quot; name=&quot;lock&quot;/&gt;</code></pre>
+<p><a href="#SpringInjectingTypedBean"><strong>Injecting Typed Collections/Maps</strong></a></p>
+<p>Spring tries to create a new <code>Map</code>/<code>Collection</code> instance and fill the new instance by iterating and converting values of the original <code>Map</code>/<code>Collection</code> (<code>IMap</code>, <code>IQueue</code> etc.) to required types when generic type parameters of the original <code>Map</code>/<code>Collection</code> and the target property/attribute do not match.</p>
+<p>Since Hazelcast <code>Map</code>s/<code>Collection</code>s are designed to hold very large data which a single machine can not carry, iterating through whole values can cause out of memory errors.</p>
+<p>To avoid this issue either target property/attribute can be declared as un-typed <code>Map</code>/<code>Collection</code></p>
+<pre><code class="lang-java">public class SomeBean {
+    @Autowired
+    IMap map; // instead of IMap&lt;K, V&gt; map
+
+    @Autowired
+    IQueue queue; // instead of IQueue&lt;E&gt; queue
+
+    ...
+}</code></pre>
+<p>or parameters of injection methods (constructor, setter) can be un-typed.</p>
+<pre><code class="lang-java">public class SomeBean {
+
+    IMap&lt;K, V&gt; map;
+
+    IQueue&lt;E&gt; queue;
+
+    public SomeBean(IMap map) { // instead of IMap&lt;K, V&gt; map
+        this.map = map;
+    }
+
+    ...
+
+    public void setQueue(IQueue queue) { // instead of IQueue&lt;E&gt; queue
+        this.queue = queue;
+    }
+    ...
+}</code></pre>
+<p><em>For more info see <a href="https://jira.springsource.org/browse/SPR-3407">Spring issue-3407</a>.</em></p>
 
 
 

@@ -949,52 +949,57 @@
 </div>
 
         <div id="content">
-            <a name="introduction"></a><h1>Introduction</h1>
-<p>Hazelcast is a clustering and highly scalable data distribution platform for Java. Hazelcast helps architects and developers to easily design and develop faster, highly scalable and reliable applications for their businesses.</p>
-<ul>
-<li><p>Distributed implementations of <code>java.util.{Queue, Set, List, Map}</code></p>
-</li>
-<li><p>Distributed implementation of <code>java.util.concurrent.ExecutorService</code></p>
-</li>
-<li><p>Distributed implementation of <code>java.util.concurrency.locks.Lock</code></p>
-</li>
-<li><p>Distributed <code>Topic</code> for publish/subscribe messaging</p>
-</li>
-<li><p>Transaction support and J2EE container integration via JCA</p>
-</li>
-<li><p>Distributed listeners and events</p>
-</li>
-<li><p>Support for cluster info and membership events</p>
-</li>
-<li><p>Dynamic HTTP session clustering</p>
-</li>
-<li><p>Dynamic clustering</p>
-</li>
-<li><p>Dynamic scaling to hundreds of servers</p>
-</li>
-<li><p>Dynamic partitioning with backups</p>
-</li>
-<li><p>Dynamic fail-over</p>
-</li>
-<li><p>Super simple to use; include a single jar</p>
-</li>
-<li><p>Super fast; thousands of operations per sec.</p>
-</li>
-<li><p>Super small; less than a MB</p>
-</li>
-<li><p>Super efficient; very nice to CPU and RAM</p>
-</li>
-</ul>
-<p>To install Hazelcast:</p>
-<ul>
-<li><p>Download hazelcast-_version_.zip from <a href="http://www.hazelcast.com">www.hazelcast.com</a></p>
-</li>
-<li><p>Unzip hazelcast-_version_.zip file</p>
-</li>
-<li><p>Add hazelcast.jar file into your classpath</p>
-</li>
-</ul>
-<p>Hazelcast is pure Java. JVMs that are running Hazelcast will dynamically cluster. Although by default Hazelcast will use multicast for discovery, it can also be configured to only use TCP/IP for environments where multicast is not available or preferred (<a href="#configuring-tcpip-cluster">Click here for more info</a>). Communication among cluster members is always TCP/IP with Java NIO beauty. Default configuration comes with 1 backup so if one node fails, no data will be lost. It is as simple as using<code>java.util.{Queue, Set, List, Map}</code>. Just add the hazelcast.jar into your classpath and start coding.</p>
+            <a name="wan-replication"></a><h1>WAN Replication</h1>
+<p>There are cases where you would need to synchronize multiple clusters. Synchronization of clusters is named as WAN (Wide Area Network) Replication because it is mainly used for replicating different clusters running on WAN. Imagine having different clusters in New York, London and Tokyo. Each cluster would be operating at very high speed in their LAN (Local Area Network) settings but you would want some or all parts of the data in these clusters replicating to each other. So updates in Tokyo cluster goes to London and NY, in the meantime updates in New York cluster is synchronized to Tokyo and London.</p>
+<p>You can setup active-passive WAN Replication where only one active node replicating its updates on the passive one. You can also setup active-active replication where each cluster is actively updating and replication to the other cluster(s).</p>
+<p>In the active-active replication setup, there might be cases where each node is updating the same entry in the same named distributed map. Thus, conflicts will occur when merging. For those cases, conflict-resolution will be needed. Here is how you can setup WAN Replication for London cluster for instance:</p>
+<pre><code class="lang-xml">&lt;hazelcast&gt;
+    &lt;wan-replication name=&quot;my-wan-cluster&quot;&gt;
+        &lt;target-cluster group-name=&quot;tokyo&quot; group-password=&quot;tokyo-pass&quot;&gt;
+            &lt;replication-impl&gt;com.hazelcast.wan.WanNoDelayReplication&lt;/replication-impl&gt;
+            &lt;end-points&gt;
+                &lt;address&gt;10.2.1.1:5701&lt;/address&gt;
+                &lt;address&gt;10.2.1.2:5701&lt;/address&gt;
+            &lt;/end-points&gt;
+        &lt;/target-cluster&gt;
+        &lt;target-cluster group-name=&quot;london&quot; group-password=&quot;london-pass&quot;&gt;
+            &lt;replication-impl&gt;com.hazelcast.wan.wan.WanNoDelayReplication&lt;/replication-impl&gt;
+            &lt;end-points&gt;
+                &lt;address&gt;10.3.5.1:5701&lt;/address&gt;
+                &lt;address&gt;10.3.5.2:5701&lt;/address&gt;
+            &lt;/end-points&gt;
+        &lt;/target-cluster&gt;
+    &lt;/wan-replication&gt;
+
+    &lt;network&gt;
+    ...
+    &lt;/network&gt;
+
+&lt;/network&gt;
+...
+&lt;/hazelcast&gt;</code></pre>
+<p>This can be the configuration of the cluster running in NY, replicating to Tokyo and London. Tokyo and London clusters should have similar configurations if they are also active replicas.</p>
+<p>If NY and London cluster configurations contain <code>wan-replication</code> element and Tokyo cluster doesn&#39;t then it means NY and London are active endpoints and Tokyo is passive endpoint.</p>
+<p>As noted earlier you can have Hazelcast replicate some or all of the data in your clusters. You might have 5 different distributed maps but you might want only one of these maps replicating across clusters. So you mark which maps to replicate by adding <code>wan-replication-ref</code> element into map configuration.</p>
+<pre><code class="lang-xml">&lt;hazelcast&gt;
+    &lt;wan-replication name=&quot;my-wan-cluster&quot;&gt;
+        ...
+    &lt;/wan-replication&gt;
+
+    &lt;network&gt;
+    ...
+    &lt;/network&gt;
+    &lt;map name=&quot;my-shared-map&quot;&gt;
+        ...
+        &lt;wan-replication-ref name=&quot;my-wan-cluster&quot;&gt;
+            &lt;merge-policy&gt;com.hazelcast.map.merge.PassThroughMergePolicy&lt;/merge-policy&gt;
+        &lt;/wan-replication-ref&gt;
+    &lt;/map&gt;
+&lt;/network&gt;
+...
+&lt;/hazelcast&gt;</code></pre>
+<p>Here we have <code>my-shared-map</code> is configured to replicate itself to the cluster targets defined in the <code>wan-replication</code> element.</p>
+<p>Note that you will also need to define a <code>merge policy</code> for merging replica entries and resolving conflicts during the merge.</p>
 
 
 

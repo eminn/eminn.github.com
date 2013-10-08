@@ -949,52 +949,76 @@
 </div>
 
         <div id="content">
-            <a name="introduction"></a><h1>Introduction</h1>
-<p>Hazelcast is a clustering and highly scalable data distribution platform for Java. Hazelcast helps architects and developers to easily design and develop faster, highly scalable and reliable applications for their businesses.</p>
+            <a name="portable-serialization"></a><h2>Portable Serialization</h2>
+<p>As an alternative to the existing serialization methods, Hazelcast offers a Portable serialization that have the following advantages</p>
 <ul>
-<li><p>Distributed implementations of <code>java.util.{Queue, Set, List, Map}</code></p>
-</li>
-<li><p>Distributed implementation of <code>java.util.concurrent.ExecutorService</code></p>
-</li>
-<li><p>Distributed implementation of <code>java.util.concurrency.locks.Lock</code></p>
-</li>
-<li><p>Distributed <code>Topic</code> for publish/subscribe messaging</p>
-</li>
-<li><p>Transaction support and J2EE container integration via JCA</p>
-</li>
-<li><p>Distributed listeners and events</p>
-</li>
-<li><p>Support for cluster info and membership events</p>
-</li>
-<li><p>Dynamic HTTP session clustering</p>
-</li>
-<li><p>Dynamic clustering</p>
-</li>
-<li><p>Dynamic scaling to hundreds of servers</p>
-</li>
-<li><p>Dynamic partitioning with backups</p>
-</li>
-<li><p>Dynamic fail-over</p>
-</li>
-<li><p>Super simple to use; include a single jar</p>
-</li>
-<li><p>Super fast; thousands of operations per sec.</p>
-</li>
-<li><p>Super small; less than a MB</p>
-</li>
-<li><p>Super efficient; very nice to CPU and RAM</p>
-</li>
+<li>Support multiversion of the same object type.</li>
+<li>Fetching individual fields without having to rely on reflection</li>
+<li>Querying and indexing support without de-serialization and/or reflection</li>
 </ul>
-<p>To install Hazelcast:</p>
-<ul>
-<li><p>Download hazelcast-_version_.zip from <a href="http://www.hazelcast.com">www.hazelcast.com</a></p>
-</li>
-<li><p>Unzip hazelcast-_version_.zip file</p>
-</li>
-<li><p>Add hazelcast.jar file into your classpath</p>
-</li>
-</ul>
-<p>Hazelcast is pure Java. JVMs that are running Hazelcast will dynamically cluster. Although by default Hazelcast will use multicast for discovery, it can also be configured to only use TCP/IP for environments where multicast is not available or preferred (<a href="#configuring-tcpip-cluster">Click here for more info</a>). Communication among cluster members is always TCP/IP with Java NIO beauty. Default configuration comes with 1 backup so if one node fails, no data will be lost. It is as simple as using<code>java.util.{Queue, Set, List, Map}</code>. Just add the hazelcast.jar into your classpath and start coding.</p>
+<p>In order to support these features, a serialized Portable object contains meta information like the version and the concrete location of the each field in the binary data. This way Hazelcast is able to navigate in the byte[] and de-serialize only the required field without actually de-serializing the whole object which improves the Query performance.</p>
+<p>With multiversion support, you can have two nodes where each of them having different versions of the same Object and Hazelcast will store both meta information and use the correct one to serialize and de-serialize Portable objects depending on the node. This is very helpfull when you are doing a rolling upgrade without shutting down the cluster.</p>
+<p>Also note that Portable serialization is totally language independent and is used as the binary protocol between Hazelcast server and clients.</p>
+<p>A sample Portable implementation of a Foo class will look like the following.</p>
+<pre><code class="lang-java">public class Foo implements Portable{
+    final static int ID = 5;
+
+    private String foo;
+
+    public String getFoo() {
+        return foo;
+    }
+
+    public void setFoo(String foo) {
+        this.foo = foo;
+    }
+
+    @Override
+    public int getFactoryId() {
+        return 1;
+    }
+
+    @Override
+    public int getClassId() {
+        return ID;
+    }
+
+    @Override
+    public void writePortable(PortableWriter writer) throws IOException {
+        writer.writeUTF(&quot;foo&quot;, foo);
+    }
+
+    @Override
+    public void readPortable(PortableReader reader) throws IOException {
+        foo = reader.readUTF(&quot;foo&quot;);
+    }
+}</code></pre>
+<p>Similar to <code>IdentifiedDataSerializable</code>, a Portable Class must provide <code>classId</code> and<code>factoryId</code>. The Factory object will be used to create the Portable object given the <code>classId</code>.</p>
+<p>A sample <code>Factory</code> could be implemented as following:</p>
+<pre><code class="lang-java">public class MyPortableFactory implements PortableFactory {
+
+    @Override
+    public Portable create(int classId) {
+        if (Foo.ID == classId)
+            return new Foo();
+        else return null;
+     }
+}</code></pre>
+<p>The last step is to register the <code>Factory</code> to the <code>SerializationConfig</code>.</p>
+<p>Programmatic Configuration</p>
+<pre><code class="lang-java">Config config = new Config();
+config.getSerializationConfig().addPortableFactory(1, new MyPortableFactory());</code></pre>
+<p>XML Configuration</p>
+<pre><code class="lang-xml">&lt;hazelcast&gt;
+    &lt;serialization&gt;
+        &lt;portable-version&gt;0&lt;/portable-version&gt;
+        &lt;portable-factories&gt;
+            &lt;portable-factory factory-id=&quot;1&quot;&gt;com.hazelcast.nio.serialization.MyPortableFactory&lt;/portable-factory&gt;
+        &lt;/portable-factories&gt;
+    &lt;/serialization&gt;
+&lt;/hazelcast&gt;</code></pre>
+<p>Note that the <code>id</code> that is passed to the <code>SerializationConfig</code> is same as the <code>factoryId</code> that <code>Foo</code> class returns.</p>
+<p>TODO: ClassDefinitionBuilder...</p>
 
 
 

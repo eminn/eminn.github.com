@@ -949,52 +949,54 @@
 </div>
 
         <div id="content">
-            <a name="introduction"></a><h1>Introduction</h1>
-<p>Hazelcast is a clustering and highly scalable data distribution platform for Java. Hazelcast helps architects and developers to easily design and develop faster, highly scalable and reliable applications for their businesses.</p>
+            <a name="partition-group-configuration"></a><h2>Partition Group Configuration</h2>
+<p>Hazelcast distributes key objects into partitions (blocks) using a consistent hashing algorithm and those partitions are assigned to nodes. That means an entry is stored in a node which is owner of partition to that entry&#39;s key is assigned. Number of total partitions is default 271 and can be changed with configuration property <code>hazelcast.map.partition.count</code>. Along with those partitions, there are also copies of them as backups. Backup partitions can have multiple copies due to backup count defined in configuration, such as first backup partition, second backup partition etc. As a rule, a node can not hold more than one copy of a partition (ownership or backup). By default Hazelcast distributes partitions and their backup copies randomly and equally among cluster nodes assuming all nodes in the cluster are identical.</p>
+<p><em>What if some nodes share same JVM or physical machine or chassis and you want backups of these nodes to be assigned to nodes in another machine or chassis? What if processing or memory capacities of some nodes are different and you do not want equal number of partitions to be assigned to all nodes?</em></p>
+<p>You can group nodes in the same JVM (or physical machine) or nodes located in the same chassis. Or you can group nodes to create identical capacity. We call these groups <code>partition groups</code>. This way partitions are assigned to those partition groups instead of single nodes. And backups of these partitions are located in another partition group.</p>
+<p>When you enable partition grouping, Hazelcast presents three choices to configure partition groups at the moments.</p>
 <ul>
-<li><p>Distributed implementations of <code>java.util.{Queue, Set, List, Map}</code></p>
-</li>
-<li><p>Distributed implementation of <code>java.util.concurrent.ExecutorService</code></p>
-</li>
-<li><p>Distributed implementation of <code>java.util.concurrency.locks.Lock</code></p>
-</li>
-<li><p>Distributed <code>Topic</code> for publish/subscribe messaging</p>
-</li>
-<li><p>Transaction support and J2EE container integration via JCA</p>
-</li>
-<li><p>Distributed listeners and events</p>
-</li>
-<li><p>Support for cluster info and membership events</p>
-</li>
-<li><p>Dynamic HTTP session clustering</p>
-</li>
-<li><p>Dynamic clustering</p>
-</li>
-<li><p>Dynamic scaling to hundreds of servers</p>
-</li>
-<li><p>Dynamic partitioning with backups</p>
-</li>
-<li><p>Dynamic fail-over</p>
-</li>
-<li><p>Super simple to use; include a single jar</p>
-</li>
-<li><p>Super fast; thousands of operations per sec.</p>
-</li>
-<li><p>Super small; less than a MB</p>
-</li>
-<li><p>Super efficient; very nice to CPU and RAM</p>
-</li>
+<li>First one is to group nodes automatically using IP addresses of nodes, so nodes sharing same network interface will be grouped together.</li>
 </ul>
-<p>To install Hazelcast:</p>
+<pre><code class="lang-xml">&lt;partition-group enabled=&quot;true&quot; group-type=&quot;HOST_AWARE&quot; /&gt;</code></pre>
+<pre><code class="lang-java">Config config = ...;
+PartitionGroupConfig partitionGroupConfig = config.getPartitionGroupConfig();
+partitionGroupConfig.setEnabled(true).setGroupType(MemberGroupType.HOST_AWARE);</code></pre>
 <ul>
-<li><p>Download hazelcast-_version_.zip from <a href="http://www.hazelcast.com">www.hazelcast.com</a></p>
-</li>
-<li><p>Unzip hazelcast-_version_.zip file</p>
-</li>
-<li><p>Add hazelcast.jar file into your classpath</p>
-</li>
+<li>Second one is custom grouping using Hazelcast&#39;s interface matching configuration. This way, you can add different and multiple interfaces to a group. You can also use wildcards in interface addresses.</li>
 </ul>
-<p>Hazelcast is pure Java. JVMs that are running Hazelcast will dynamically cluster. Although by default Hazelcast will use multicast for discovery, it can also be configured to only use TCP/IP for environments where multicast is not available or preferred (<a href="#configuring-tcpip-cluster">Click here for more info</a>). Communication among cluster members is always TCP/IP with Java NIO beauty. Default configuration comes with 1 backup so if one node fails, no data will be lost. It is as simple as using<code>java.util.{Queue, Set, List, Map}</code>. Just add the hazelcast.jar into your classpath and start coding.</p>
+<pre><code class="lang-xml">&lt;partition-group enabled=&quot;true&quot; group-type=&quot;CUSTOM&quot;&gt;
+&lt;member-group&gt;
+    &lt;interface&gt;10.10.0.*&lt;/interface&gt;
+    &lt;interface&gt;10.10.3.*&lt;/interface&gt;
+    &lt;interface&gt;10.10.5.*&lt;/interface&gt;
+&lt;/member-group&gt;
+&lt;member-group&gt;
+    &lt;interface&gt;10.10.10.10-100&lt;/interface&gt;
+    &lt;interface&gt;10.10.1.*&lt;/interface&gt;
+    &lt;interface&gt;10.10.2.*&lt;/interface&gt;
+&lt;/member-group
+&lt;/partition-group&gt;</code></pre>
+<pre><code class="lang-java">Config config = ...;
+PartitionGroupConfig partitionGroupConfig = config.getPartitionGroupConfig();
+partitionGroupConfig.setEnabled(true).setGroupType(MemberGroupType.CUSTOM);
+
+MemberGroupConfig memberGroupConfig = new MemberGroupConfig();
+memberGroupConfig.addInterface(&quot;10.10.0.*&quot;)
+.addInterface(&quot;10.10.3.*&quot;).addInterface(&quot;10.10.5.*&quot;);
+
+MemberGroupConfig memberGroupConfig2 = new MemberGroupConfig();
+memberGroupConfig2.addInterface(&quot;10.10.10.10-100&quot;)
+.addInterface(&quot;10.10.1.*&quot;).addInterface(&quot;10.10.2.*&quot;);
+
+partitionGroupConfig.addMemberGroupConfig(memberGroupConfig);
+partitionGroupConfig.addMemberGroupConfig(memberGroupConfig2);</code></pre>
+<ul>
+<li>Third one is to give every member their own group. This gives the least amount of protection and is the default configuration for a Hazelcast cluster.</li>
+</ul>
+<pre><code class="lang-xml">&lt;partition-group enabled=&quot;true&quot; group-type=&quot;PER_MEMBER&quot; /&gt;</code></pre>
+<pre><code class="lang-java">Config config = ...;
+PartitionGroupConfig partitionGroupConfig = config.getPartitionGroupConfig();
+partitionGroupConfig.setEnabled(true).setGroupType(MemberGroupType.PER_MEMBER);</code></pre>
 
 
 

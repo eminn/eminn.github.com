@@ -949,52 +949,35 @@
 </div>
 
         <div id="content">
-            <a name="introduction"></a><h1>Introduction</h1>
-<p>Hazelcast is a clustering and highly scalable data distribution platform for Java. Hazelcast helps architects and developers to easily design and develop faster, highly scalable and reliable applications for their businesses.</p>
-<ul>
-<li><p>Distributed implementations of <code>java.util.{Queue, Set, List, Map}</code></p>
-</li>
-<li><p>Distributed implementation of <code>java.util.concurrent.ExecutorService</code></p>
-</li>
-<li><p>Distributed implementation of <code>java.util.concurrency.locks.Lock</code></p>
-</li>
-<li><p>Distributed <code>Topic</code> for publish/subscribe messaging</p>
-</li>
-<li><p>Transaction support and J2EE container integration via JCA</p>
-</li>
-<li><p>Distributed listeners and events</p>
-</li>
-<li><p>Support for cluster info and membership events</p>
-</li>
-<li><p>Dynamic HTTP session clustering</p>
-</li>
-<li><p>Dynamic clustering</p>
-</li>
-<li><p>Dynamic scaling to hundreds of servers</p>
-</li>
-<li><p>Dynamic partitioning with backups</p>
-</li>
-<li><p>Dynamic fail-over</p>
-</li>
-<li><p>Super simple to use; include a single jar</p>
-</li>
-<li><p>Super fast; thousands of operations per sec.</p>
-</li>
-<li><p>Super small; less than a MB</p>
-</li>
-<li><p>Super efficient; very nice to CPU and RAM</p>
-</li>
-</ul>
-<p>To install Hazelcast:</p>
-<ul>
-<li><p>Download hazelcast-_version_.zip from <a href="http://www.hazelcast.com">www.hazelcast.com</a></p>
-</li>
-<li><p>Unzip hazelcast-_version_.zip file</p>
-</li>
-<li><p>Add hazelcast.jar file into your classpath</p>
-</li>
-</ul>
-<p>Hazelcast is pure Java. JVMs that are running Hazelcast will dynamically cluster. Although by default Hazelcast will use multicast for discovery, it can also be configured to only use TCP/IP for environments where multicast is not available or preferred (<a href="#configuring-tcpip-cluster">Click here for more info</a>). Communication among cluster members is always TCP/IP with Java NIO beauty. Default configuration comes with 1 backup so if one node fails, no data will be lost. It is as simple as using<code>java.util.{Queue, Set, List, Map}</code>. Just add the hazelcast.jar into your classpath and start coding.</p>
+            <a name="memcache-client"></a><h2>Memcache Client</h2>
+<p>A Memcache client written in any language can talk directly to Hazelcast cluster. No additional configuration is required. Here is an example: Let&#39;s say your cluster&#39;s members are:</p>
+<pre><code>Members [5] {
+    Member [10.20.17.1:5701]
+    Member [10.20.17.2:5701]
+    Member [10.20.17.4:5701]
+    Member [10.20.17.3:5701]
+    Member [10.20.17.5:5701]
+ }</code></pre>
+<p>And you have a PHP application that uses PHP Memcache client to cache things in Hazelcast. All you need to do is have your PHP memcache client connect to one of these members. It doesn&#39;t matter which member the client connects to because Hazelcast cluster looks as one giant machine (Single System Image). PHP client code sample:</p>
+<pre><code class="lang-php">&lt;?php
+    $memcache = new Memcache;
+    $memcache-&gt;connect(&#39;10.20.17.1&#39;, 5701) or die (&quot;Could not connect&quot;);
+    $memcache-&gt;set(&#39;key1&#39;,&#39;value1&#39;,0,3600);
+    $get_result = $memcache-&gt;get(&#39;key1&#39;); //retrieve your data
+    var_dump($get_result); //show it
+?&gt;</code></pre>
+<p>Notice that memcache client is connecting to <code>10.20.17.1</code> and using port<code>5701</code>. Java client code sample with SpyMemcached client:</p>
+<pre><code class="lang-java">MemcachedClient client = new MemcachedClient(AddrUtil.getAddresses(&quot;10.20.17.1:5701 10.20.17.2:5701&quot;));
+client.set(&quot;key1&quot;, 3600, &quot;value1&quot;);
+System.out.println(client.get(&quot;key1&quot;));</code></pre>
+<p>If you want your data to be stored in different maps(e.g to utilize per map configuration ), you can do that with a map name prefix as following:</p>
+<pre><code class="lang-java">MemcachedClient client = new MemcachedClient(AddrUtil.getAddresses(&quot;10.20.17.1:5701 10.20.17.2:5701&quot;));
+client.set(&quot;map1:key1&quot;, 3600, &quot;value1&quot;); // store to *hz_memcache_map1
+client.set(&quot;map2:key1&quot;, 3600, &quot;value1&quot;); // store to hz_memcache_map2
+System.out.println(client.get(&quot;key1&quot;)); //get from hz_memcache_map1
+System.out.println(client.get(&quot;key2&quot;)); //get from hz_memcache_map2</code></pre>
+<p>hz_memcache prefix is to separate memcache maps from hazelcast maps.</p>
+<p>An entry written with a memcache client can be read by another memcache client written in another language.</p>
 
 
 

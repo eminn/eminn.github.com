@@ -949,52 +949,18 @@
 </div>
 
         <div id="content">
-            <a name="introduction"></a><h1>Introduction</h1>
-<p>Hazelcast is a clustering and highly scalable data distribution platform for Java. Hazelcast helps architects and developers to easily design and develop faster, highly scalable and reliable applications for their businesses.</p>
-<ul>
-<li><p>Distributed implementations of <code>java.util.{Queue, Set, List, Map}</code></p>
-</li>
-<li><p>Distributed implementation of <code>java.util.concurrent.ExecutorService</code></p>
-</li>
-<li><p>Distributed implementation of <code>java.util.concurrency.locks.Lock</code></p>
-</li>
-<li><p>Distributed <code>Topic</code> for publish/subscribe messaging</p>
-</li>
-<li><p>Transaction support and J2EE container integration via JCA</p>
-</li>
-<li><p>Distributed listeners and events</p>
-</li>
-<li><p>Support for cluster info and membership events</p>
-</li>
-<li><p>Dynamic HTTP session clustering</p>
-</li>
-<li><p>Dynamic clustering</p>
-</li>
-<li><p>Dynamic scaling to hundreds of servers</p>
-</li>
-<li><p>Dynamic partitioning with backups</p>
-</li>
-<li><p>Dynamic fail-over</p>
-</li>
-<li><p>Super simple to use; include a single jar</p>
-</li>
-<li><p>Super fast; thousands of operations per sec.</p>
-</li>
-<li><p>Super small; less than a MB</p>
-</li>
-<li><p>Super efficient; very nice to CPU and RAM</p>
-</li>
-</ul>
-<p>To install Hazelcast:</p>
-<ul>
-<li><p>Download hazelcast-_version_.zip from <a href="http://www.hazelcast.com">www.hazelcast.com</a></p>
-</li>
-<li><p>Unzip hazelcast-_version_.zip file</p>
-</li>
-<li><p>Add hazelcast.jar file into your classpath</p>
-</li>
-</ul>
-<p>Hazelcast is pure Java. JVMs that are running Hazelcast will dynamically cluster. Although by default Hazelcast will use multicast for discovery, it can also be configured to only use TCP/IP for environments where multicast is not available or preferred (<a href="#configuring-tcpip-cluster">Click here for more info</a>). Communication among cluster members is always TCP/IP with Java NIO beauty. Default configuration comes with 1 backup so if one node fails, no data will be lost. It is as simple as using<code>java.util.{Queue, Set, List, Map}</code>. Just add the hazelcast.jar into your classpath and start coding.</p>
+            <a name="maps"></a><h2>Maps</h2>
+<p>Map instances are listed on the left panel. When you click on a map, a new tab for monitoring this map instance is opened on the right. In this tab, you can monitor metrics also re-configure the map.</p>
+<p><img src="images/maphome.jpg" alt=""></p>
+<a name="monitoring-maps"></a><h3>Monitoring Maps</h3>
+<p>In map page you can monitor instance metrics by 2 charts and 2 datatables. First data table &quot;Memory Data Table&quot; gives the memory metrics distributed over members. &quot;Throughput Data Table&quot; gives information about the operations performed on instance (get, put, remove) Each chart monitors a type data of the instance on cluster. You can change the type by clicking on chart. The possible ones are: Size, Throughput, Memory, Backup Size, Backup Memory, Hits, Locked Entries, Puts, Gets, Removes...</p>
+<p><img src="images/mapchart.jpg" alt=""></p>
+<a name="map-browser"></a><h3>Map Browser</h3>
+<p>You can open &quot;Map Browser&quot; tool by clicking &quot;Browse&quot; button on map tab page. Using map browser, you can reach map&#39;s entries by keys. Besides its value, extra informations such as entry&#39;s cost, expiration time is provided.</p>
+<p><a href="images/mapbrowse.jpg"><img src="images/mapbrowse.jpg" alt=""></a></p>
+<a name="map-configuration"></a><h3>Map Configuration</h3>
+<p>You can open &quot;Map Configuration&quot; tool by clicking &quot;Config&quot; button on map tab page. This button is disabled for users with Read-Only permission. Using map config tool you can adjust map&#39;s setting. You can change backup count, max size, max idle(seconds), eviction policy, cache value, read backup data, backup count of the map.</p>
+<p><img src="images/mapconfig.jpg" alt=""></p>
 
 
 

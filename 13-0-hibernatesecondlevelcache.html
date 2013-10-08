@@ -949,52 +949,116 @@
 </div>
 
         <div id="content">
-            <a name="introduction"></a><h1>Introduction</h1>
-<p>Hazelcast is a clustering and highly scalable data distribution platform for Java. Hazelcast helps architects and developers to easily design and develop faster, highly scalable and reliable applications for their businesses.</p>
+            <a name="hibernate-second-level-cache"></a><h1>Hibernate Second Level Cache</h1>
+<p>Hazelcast provides distributed second level cache for your Hibernate entities, collections and queries. Hazelcast has two implementations of Hibernate 2nd level cache, one for hibernate-pre-3.3 and one for hibernate-3.3.x versions. In your Hibernate configuration file (ex: hibernate.cfg.xml), add these properties:</p>
 <ul>
-<li><p>Distributed implementations of <code>java.util.{Queue, Set, List, Map}</code></p>
+<li>To enable use of second level cache</li>
+</ul>
+<pre><code class="lang-xml">&lt;property name=&quot;hibernate.cache.use_second_level_cache&quot;&gt;true&lt;/property&gt;</code></pre>
+<ul>
+<li>To enable use of query cache</li>
+</ul>
+<pre><code class="lang-xml">&lt;property name=&quot;hibernate.cache.use_query_cache&quot;&gt;true&lt;/property&gt;</code></pre>
+<ul>
+<li>And to force minimal puts into cache</li>
+</ul>
+<pre><code class="lang-xml">&lt;property name=&quot;hibernate.cache.use_minimal_puts&quot;&gt;true&lt;/property&gt;</code></pre>
+<ul>
+<li><p>To configure Hazelcast for Hibernate, it is enough to put configuration file named <code>hazelcast.xml</code> into root of your classpath. If Hazelcast can not find <code>hazelcast.xml</code> then it will use default configuration from hazelcast.jar.</p>
 </li>
-<li><p>Distributed implementation of <code>java.util.concurrent.ExecutorService</code></p>
-</li>
-<li><p>Distributed implementation of <code>java.util.concurrency.locks.Lock</code></p>
-</li>
-<li><p>Distributed <code>Topic</code> for publish/subscribe messaging</p>
-</li>
-<li><p>Transaction support and J2EE container integration via JCA</p>
-</li>
-<li><p>Distributed listeners and events</p>
-</li>
-<li><p>Support for cluster info and membership events</p>
-</li>
-<li><p>Dynamic HTTP session clustering</p>
-</li>
-<li><p>Dynamic clustering</p>
-</li>
-<li><p>Dynamic scaling to hundreds of servers</p>
-</li>
-<li><p>Dynamic partitioning with backups</p>
-</li>
-<li><p>Dynamic fail-over</p>
-</li>
-<li><p>Super simple to use; include a single jar</p>
-</li>
-<li><p>Super fast; thousands of operations per sec.</p>
-</li>
-<li><p>Super small; less than a MB</p>
-</li>
-<li><p>Super efficient; very nice to CPU and RAM</p>
+<li><p>You can define custom named Hazelcast configuration xml file with one of these Hibernate configuration properties.</p>
 </li>
 </ul>
-<p>To install Hazelcast:</p>
+<pre><code class="lang-xml">&lt;property name=&quot;hibernate.cache.provider_configuration_file_resource_path&quot;&gt;
+     hazelcast-custom-config.xml
+&lt;/property&gt;</code></pre>
+<p>or</p>
+<pre><code class="lang-xml">&lt;property name=&quot;hibernate.cache.hazelcast.configuration_file_path&quot;&gt;
+     hazelcast-custom-config.xml
+&lt;/property&gt;</code></pre>
 <ul>
-<li><p>Download hazelcast-_version_.zip from <a href="http://www.hazelcast.com">www.hazelcast.com</a></p>
+<li>You can set up Hazelcast to connect cluster as LiteMember. LiteMember is a member of the cluster, it has socket connection to every member in the cluster and it knows where the data, but does not contain any data.</li>
+</ul>
+<pre><code class="lang-xml">&lt;property name=&quot;hibernate.cache.hazelcast.use_lite_member&quot;&gt;true&lt;/property&gt;</code></pre>
+<ul>
+<li>You can set up Hazelcast to connect cluster as Native Client. Native client is not member and it connects to one of the cluster members and delegates all cluster wide operations to it. When the relied cluster member dies, client will transparently switch to another live member. <em>(Native Client property takes precedence over LiteMember property.)</em></li>
+</ul>
+<pre><code class="lang-xml">&lt;property name=&quot;hibernate.cache.hazelcast.use_native_client&quot;&gt;true&lt;/property&gt;</code></pre>
+<pre><code>To setup Native Client properly, you should add Hazelcast **group-name**, **group-password** and **cluster member address** properties. Native Client will connect to defined member and will get addresses of all members in the cluster. If the connected member will die or leave the cluster, client will automatically switch to another member in the cluster.</code></pre>
+<pre><code class="lang-xml">&lt;property name=&quot;hibernate.cache.hazelcast.native_client_address&quot;&gt;10.34.22.15&lt;/property&gt;
+&lt;property name=&quot;hibernate.cache.hazelcast.native_client_group&quot;&gt;dev&lt;/property&gt;
+&lt;property name=&quot;hibernate.cache.hazelcast.native_client_password&quot;&gt;dev-pass&lt;/property&gt;</code></pre>
+<p><em>To use Native Client you should add <code>hazelcast-client-&lt;version&gt;.jar</code> into your classpath.</em></p>
+<p><a href="#native-client">Read more about NativeClient &amp; LiteMember</a></p>
+<ul>
+<li>To define Hibernate RegionFacyory, add following property.</li>
+</ul>
+<pre><code class="lang-xml">&lt;property name=&quot;hibernate.cache.region.factory_class&quot;&gt;
+     com.hazelcast.hibernate.HazelcastCacheRegionFactory
+&lt;/property&gt;</code></pre>
+<pre><code>Or as an alternative you can use `HazelcastLocalCacheRegionFactory` which stores data in local node and sends invalidation messages when an entry is updated on local.</code></pre>
+<pre><code class="lang-xml">&lt;property name=&quot;hibernate.cache.region.factory_class&quot;&gt;
+     com.hazelcast.hibernate.HazelcastLocalCacheRegionFactory
+&lt;/property&gt;</code></pre>
+<p>Hazelcast creates a separate distributed map for each Hibernate cache region. So these regions can be configured easily via Hazelcast map configuration. You can define <strong>backup</strong>, <strong>eviction</strong>, <strong>TTL</strong> and <strong>Near Cache</strong> properties.</p>
+<ul>
+<li><p><a href="#backups">Backup Configuration</a></p>
 </li>
-<li><p>Unzip hazelcast-_version_.zip file</p>
+<li><p><a href="#eviction">Eviction And TTL Configuration</a></p>
 </li>
-<li><p>Add hazelcast.jar file into your classpath</p>
+<li><p><a href="#near-cache">Near Cache Configuration</a></p>
 </li>
 </ul>
-<p>Hazelcast is pure Java. JVMs that are running Hazelcast will dynamically cluster. Although by default Hazelcast will use multicast for discovery, it can also be configured to only use TCP/IP for environments where multicast is not available or preferred (<a href="#configuring-tcpip-cluster">Click here for more info</a>). Communication among cluster members is always TCP/IP with Java NIO beauty. Default configuration comes with 1 backup so if one node fails, no data will be lost. It is as simple as using<code>java.util.{Queue, Set, List, Map}</code>. Just add the hazelcast.jar into your classpath and start coding.</p>
+<p>Hibernate has four cache concurrency strategies: <em>read-only</em>, <em>read-write</em>, <em>nonstrict-read-write</em> and <em>transactional</em>. But Hibernate does not forces cache providers to support all strategies. And Hazelcast supports first three (<strong>read-only</strong>, <strong>read-write</strong>, <strong>nonstrict-read-write</strong>) of these four strategies. Hazelcast has no support for <em>transactional</em> strategy yet.</p>
+<ul>
+<li>If you are using xml based class configurations, you should add a <em>cache</em> element into your configuration with <em>usage</em> attribute with one of <em>read-only</em>, <em>read-write</em>, <em>nonstrict-read-write</em>.</li>
+</ul>
+<pre><code class="lang-xml">&lt;class name=&quot;eg.Immutable&quot; mutable=&quot;false&quot;&gt;
+    &lt;cache usage=&quot;read-only&quot;/&gt;
+    .... 
+&lt;/class&gt;
+
+&lt;class name=&quot;eg.Cat&quot; .... &gt;
+    &lt;cache usage=&quot;read-write&quot;/&gt;
+    ....
+    &lt;set name=&quot;kittens&quot; ... &gt;
+        &lt;cache usage=&quot;read-write&quot;/&gt;
+        ....
+    &lt;/set&gt;
+&lt;/class&gt;</code></pre>
+<ul>
+<li>If you are using Hibernate-Annotations then you can add <em>class-cache</em> or <em>collection-cache</em> element into your Hibernate configuration file with <em>usage</em> attribute with one of <em>read only</em>, <em>read/write</em>, <em>nonstrict read/write</em>.</li>
+</ul>
+<pre><code class="lang-xml">&lt;class-cache usage=&quot;read-only&quot; class=&quot;eg.Immutable&quot;/&gt;
+&lt;class-cache usage=&quot;read-write&quot; class=&quot;eg.Cat&quot;/&gt;
+&lt;collection-cache collection=&quot;eg.Cat.kittens&quot; usage=&quot;read-write&quot;/&gt;</code></pre>
+<p>OR</p>
+<ul>
+<li>Alternatively, you can put Hibernate Annotation&#39;s <em>@Cache</em> annotation on your entities and collections.</li>
+</ul>
+<pre><code class="lang-java">Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+public class Cat implements Serializable {
+     ...
+}</code></pre>
+<p>The last thing you should be aware of is to drop hazelcast-hibernate-\<version\>.jar into your classpath.</p>
+<ul>
+<li><p><strong>Accessing underlying <code>HazelcastInstance</code></strong></p>
+<p>Using <code>com.hazelcast.hibernate.instance.HazelcastAccessor</code> you can access the underlying <code>HazelcastInstance</code> used by Hibernate SessionFactory.</p>
+</li>
+</ul>
+<pre><code class="lang-java">SessionFactory sessionFactory = ...;
+HazelcastInstance hazelcastInstance = HazelcastAccessor.getHazelcastInstance(sessionFactory);</code></pre>
+<ul>
+<li><p><strong>Changing/setting lock timeout value of <em>read-write</em> strategy</strong></p>
+<p>Lock timeout value can be set using <code>hibernate.cache.hazelcast.lock_timeout_in_seconds</code> Hibernate property. Value should be in seconds and default value is 300 seconds.</p>
+</li>
+<li><p><strong>Using named <code>HazelcastInstance</code></strong></p>
+<p>Instead of creating a new <code>HazelcastInstance</code> for each <code>SessionFactory</code>, an existing instance can be used by setting <code>hibernate.cache.hazelcast.instance_name</code> Hibernate property to <code>HazelcastInstance</code>&#39;s name. For more information see <a href="#named-hazelcastinstance">Named HazelcastInstance</a>.</p>
+</li>
+<li><p><strong>Disabling shutdown during SessionFactory.close()</strong></p>
+<p>Shutting down <code>HazelcastInstance</code> can be disabled during <code>SessionFactory.close()</code> by setting <code>hibernate.cache.hazelcast.shutdown_on_session_factory_close</code> Hibernate property to false. <em>(In this case Hazelcast property <code>hazelcast.shutdownhook.enabled</code> should not be set to false.)</em> Default value is <code>true</code>.</p>
+</li>
+</ul>
 
 
 

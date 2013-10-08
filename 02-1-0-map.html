@@ -949,52 +949,57 @@
 </div>
 
         <div id="content">
-            <a name="introduction"></a><h1>Introduction</h1>
-<p>Hazelcast is a clustering and highly scalable data distribution platform for Java. Hazelcast helps architects and developers to easily design and develop faster, highly scalable and reliable applications for their businesses.</p>
+            <a name="distributed-map"></a><h2>Distributed Map</h2>
+<p>Hazelcast will partition your map entries; and almost evenly distribute onto all Hazelcast members. Distributed maps have 1 backup by default so that if a member goes down, we don&#39;t lose data. Backup operations are synchronous so when a <code>map.put(key, value)</code> returns, it is guaranteed that the entry is replicated to one other node. For the reads, it is also guaranteed that <code>map.get(key)</code> returns the latest value of the entry. Consistency is strictly enforced.</p>
+<pre><code class="lang-java">import com.hazelcast.core.Hazelcast;
+import java.util.Map;
+import java.util.Collection;
+import com.hazelcast.config.Config;
+
+Config cfg = new Config();
+HazelcastInstance hz = Hazelcast.newHazelcastInstance(cfg);
+Map&lt;String, Customer&gt; mapCustomers = hz.getMap(&quot;customers&quot;);
+mapCustomers.put(&quot;1&quot;, new Customer(&quot;Joe&quot;, &quot;Smith&quot;));
+mapCustomers.put(&quot;2&quot;, new Customer(&quot;Ali&quot;, &quot;Selam&quot;));
+mapCustomers.put(&quot;3&quot;, new Customer(&quot;Avi&quot;, &quot;Noyan&quot;));
+
+Collection&lt;Customer&gt; colCustomers = mapCustomers.values();
+for (Customer customer : colCustomers) {
+    // process customer
+}</code></pre>
+<p><code>Hazelcast.getMap()</code> actually returns <code>com.hazelcast.core.IMap</code> which extends <code>java.util.concurrent.ConcurrentMap</code> interface. So methods like <code>ConcurrentMap.putIfAbsent(key,value)</code> and <code>ConcurrentMap.replace(key,value)</code> can be used on distributed map as shown in the example below.</p>
+<pre><code class="lang-java">import com.hazelcast.core.Hazelcast;
+import java.util.concurrent.ConcurrentMap;
+
+Customer getCustomer (String id) {
+    ConcurrentMap&lt;String, Customer&gt; map = Hazelcast.getMap(&quot;customers&quot;);
+    Customer customer = map.get(id);
+    if (customer == null) {
+        customer = new Customer (id);
+        customer = map.putIfAbsent(id, customer);
+    }
+    return customer;
+}               
+
+public boolean updateCustomer (Customer customer) {
+    ConcurrentMap&lt;String, Customer&gt; map = Hazelcast.getMap(&quot;customers&quot;);
+    return (map.replace(customer.getId(), customer) != null);            
+}
+
+public boolean removeCustomer (Customer customer) {
+    ConcurrentMap&lt;String, Customer&gt; map = Hazelcast.getMap(&quot;customers&quot;);
+    return map.remove(customer.getId(), customer) );           
+}</code></pre>
+<p>All <code>ConcurrentMap</code> operations such as <code>put</code> and <code>remove</code> might wait if the key is locked by another thread in the local or remote JVM, but they will eventually return with success. <code>ConcurrentMap</code> operations never throw<code>java.util.ConcurrentModificationException</code>.</p>
+<p>Also see:</p>
 <ul>
-<li><p>Distributed implementations of <code>java.util.{Queue, Set, List, Map}</code></p>
+<li><p>Distributed Map internals.</p>
 </li>
-<li><p>Distributed implementation of <code>java.util.concurrent.ExecutorService</code></p>
+<li><p><a href="#data-affinity">Data Affinity</a>.</p>
 </li>
-<li><p>Distributed implementation of <code>java.util.concurrency.locks.Lock</code></p>
-</li>
-<li><p>Distributed <code>Topic</code> for publish/subscribe messaging</p>
-</li>
-<li><p>Transaction support and J2EE container integration via JCA</p>
-</li>
-<li><p>Distributed listeners and events</p>
-</li>
-<li><p>Support for cluster info and membership events</p>
-</li>
-<li><p>Dynamic HTTP session clustering</p>
-</li>
-<li><p>Dynamic clustering</p>
-</li>
-<li><p>Dynamic scaling to hundreds of servers</p>
-</li>
-<li><p>Dynamic partitioning with backups</p>
-</li>
-<li><p>Dynamic fail-over</p>
-</li>
-<li><p>Super simple to use; include a single jar</p>
-</li>
-<li><p>Super fast; thousands of operations per sec.</p>
-</li>
-<li><p>Super small; less than a MB</p>
-</li>
-<li><p>Super efficient; very nice to CPU and RAM</p>
+<li><p><a href="#wildcard-configuration">Map Configuration with wildcards.</a>.</p>
 </li>
 </ul>
-<p>To install Hazelcast:</p>
-<ul>
-<li><p>Download hazelcast-_version_.zip from <a href="http://www.hazelcast.com">www.hazelcast.com</a></p>
-</li>
-<li><p>Unzip hazelcast-_version_.zip file</p>
-</li>
-<li><p>Add hazelcast.jar file into your classpath</p>
-</li>
-</ul>
-<p>Hazelcast is pure Java. JVMs that are running Hazelcast will dynamically cluster. Although by default Hazelcast will use multicast for discovery, it can also be configured to only use TCP/IP for environments where multicast is not available or preferred (<a href="#configuring-tcpip-cluster">Click here for more info</a>). Communication among cluster members is always TCP/IP with Java NIO beauty. Default configuration comes with 1 backup so if one node fails, no data will be lost. It is as simple as using<code>java.util.{Queue, Set, List, Map}</code>. Just add the hazelcast.jar into your classpath and start coding.</p>
 
 
 

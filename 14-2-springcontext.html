@@ -949,52 +949,113 @@
 </div>
 
         <div id="content">
-            <a name="introduction"></a><h1>Introduction</h1>
-<p>Hazelcast is a clustering and highly scalable data distribution platform for Java. Hazelcast helps architects and developers to easily design and develop faster, highly scalable and reliable applications for their businesses.</p>
-<ul>
-<li><p>Distributed implementations of <code>java.util.{Queue, Set, List, Map}</code></p>
-</li>
-<li><p>Distributed implementation of <code>java.util.concurrent.ExecutorService</code></p>
-</li>
-<li><p>Distributed implementation of <code>java.util.concurrency.locks.Lock</code></p>
-</li>
-<li><p>Distributed <code>Topic</code> for publish/subscribe messaging</p>
-</li>
-<li><p>Transaction support and J2EE container integration via JCA</p>
-</li>
-<li><p>Distributed listeners and events</p>
-</li>
-<li><p>Support for cluster info and membership events</p>
-</li>
-<li><p>Dynamic HTTP session clustering</p>
-</li>
-<li><p>Dynamic clustering</p>
-</li>
-<li><p>Dynamic scaling to hundreds of servers</p>
-</li>
-<li><p>Dynamic partitioning with backups</p>
-</li>
-<li><p>Dynamic fail-over</p>
-</li>
-<li><p>Super simple to use; include a single jar</p>
-</li>
-<li><p>Super fast; thousands of operations per sec.</p>
-</li>
-<li><p>Super small; less than a MB</p>
-</li>
-<li><p>Super efficient; very nice to CPU and RAM</p>
-</li>
-</ul>
-<p>To install Hazelcast:</p>
-<ul>
-<li><p>Download hazelcast-_version_.zip from <a href="http://www.hazelcast.com">www.hazelcast.com</a></p>
-</li>
-<li><p>Unzip hazelcast-_version_.zip file</p>
-</li>
-<li><p>Add hazelcast.jar file into your classpath</p>
-</li>
-</ul>
-<p>Hazelcast is pure Java. JVMs that are running Hazelcast will dynamically cluster. Although by default Hazelcast will use multicast for discovery, it can also be configured to only use TCP/IP for environments where multicast is not available or preferred (<a href="#configuring-tcpip-cluster">Click here for more info</a>). Communication among cluster members is always TCP/IP with Java NIO beauty. Default configuration comes with 1 backup so if one node fails, no data will be lost. It is as simple as using<code>java.util.{Queue, Set, List, Map}</code>. Just add the hazelcast.jar into your classpath and start coding.</p>
+            <a name="spring-managed-context"></a><h2>Spring Managed Context</h2>
+<p>It&#39;s often desired to access Spring managed beans, to apply bean properties or to apply factory callbacks such as <code>ApplicationContextAware</code>, <code>BeanNameAware</code> or to apply bean post-processing such as <code>InitializingBean</code>, <code>@PostConstruct</code> like annotations while using Hazelcast distributed <code>ExecutorService</code> or more generally any Hazelcast managed object. Achieving those features are as simple as adding <code>@SpringAware</code> annotation to your distributed object types. Once you have configured HazelcastInstance as explained in <a href="#SpringConfig">Spring configuration</a>, just mark any distributed type with <code>@SpringAware</code> annotation.</p>
+<pre><code class="lang-xml">&lt;beans xmlns=&quot;http://www.springframework.org/schema/beans&quot;
+       xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;
+       xmlns:context=&quot;http://www.springframework.org/schema/context&quot;
+       xmlns:hz=&quot;http://www.hazelcast.com/schema/spring&quot;
+       xsi:schemaLocation=&quot;http://www.springframework.org/schema/beans
+                http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+                http://www.springframework.org/schema/context
+                http://www.springframework.org/schema/context/spring-context-3.0.xsd
+                http://www.hazelcast.com/schema/spring
+                http://www.hazelcast.com/schema/spring/hazelcast-spring-3.0.xsd&quot;&gt;
+
+    &lt;context:annotation-config /&gt;
+
+    &lt;hz:hazelcast id=&quot;instance&quot;&gt;
+        &lt;hz:config&gt;
+            &lt;hz:group name=&quot;dev&quot; password=&quot;password&quot;/&gt;
+            &lt;hz:network port=&quot;5701&quot; port-auto-increment=&quot;false&quot;&gt;
+                &lt;hz:join&gt;
+                    &lt;hz:multicast enabled=&quot;false&quot; /&gt;
+                    &lt;hz:tcp-ip enabled=&quot;true&quot;&gt;
+                        &lt;hz:members&gt;10.10.1.2, 10.10.1.3&lt;/hz:members&gt;
+                    &lt;/hz:tcp-ip&gt;
+                &lt;/hz:join&gt;
+            &lt;/hz:network&gt;
+            ...
+        &lt;/hz:config&gt;
+    &lt;/hz:hazelcast&gt;
+
+    &lt;bean id=&quot;someBean&quot; class=&quot;com.hazelcast.examples.spring.SomeBean&quot; scope=&quot;singleton&quot; /&gt;
+    ...
+&lt;/beans&gt;</code></pre>
+<p><strong>ExecutorService example:</strong></p>
+<pre><code class="lang-java">@SpringAware
+public class SomeTask implements Callable&lt;Long&gt;, ApplicationContextAware, Serializable {
+
+    private transient ApplicationContext context;
+
+    private transient SomeBean someBean;
+
+    public Long call() throws Exception {
+        return someBean.value;
+    }
+
+    public void setApplicationContext(final ApplicationContext applicationContext)
+        throws BeansException {
+        context = applicationContext;
+    }
+
+    @Autowired
+    public void setSomeBean(final SomeBean someBean) {
+        this.someBean = someBean;
+    }
+}</code></pre>
+<pre><code class="lang-java">HazelcastInstance hazelcast = (HazelcastInstance) context.getBean(&quot;hazelcast&quot;);
+SomeBean bean = (SomeBean) context.getBean(&quot;someBean&quot;);
+
+Future&lt;Long&gt; f = hazelcast.getExecutorService().submit(new SomeTask());
+Assert.assertEquals(bean.value, f.get().longValue());
+
+// choose a member
+Member member = hazelcast.getCluster().getMembers().iterator().next();
+
+Future&lt;Long&gt; f2 = (Future&lt;Long&gt;) hazelcast.getExecutorService()
+    .submitToMember(new SomeTask(), member);
+Assert.assertEquals(bean.value, f2.get().longValue());</code></pre>
+<p><strong>Distributed Map value example:</strong></p>
+<pre><code class="lang-java">@SpringAware
+@Component(&quot;someValue&quot;)
+@Scope(&quot;prototype&quot;)
+public class SomeValue implements Serializable, ApplicationContextAware {
+
+    transient ApplicationContext context;
+
+    transient SomeBean someBean;
+
+    transient boolean init = false;
+
+    public void setApplicationContext(final ApplicationContext applicationContext)
+        throws BeansException {
+        context = applicationContext;
+    }
+
+    @Autowired
+    public void setSomeBean(final SomeBean someBean) {
+        this.someBean = someBean;
+    }
+
+    @PostConstruct
+    public void init() {
+        someBean.doSomethingUseful();
+        init = true;
+    }
+    ...
+}</code></pre>
+<p>On Node-1;</p>
+<pre><code class="lang-java">HazelcastInstance hazelcast = (HazelcastInstance) context.getBean(&quot;hazelcast&quot;);
+SomeValue value = (SomeValue) context.getBean(&quot;someValue&quot;)
+IMap&lt;String, SomeValue&gt; map = hazelcast.getMap(&quot;values&quot;);
+map.put(&quot;key&quot;, value);</code></pre>
+<p>On Node-2;</p>
+<pre><code class="lang-java">HazelcastInstance hazelcast = (HazelcastInstance) context.getBean(&quot;hazelcast&quot;);
+IMap&lt;String, SomeValue&gt; map = hazelcast.getMap(&quot;values&quot;);
+SomeValue value = map.get(&quot;key&quot;);
+Assert.assertTrue(value.init);</code></pre>
+<p><em>Note that, Spring managed properties/fields are marked as <code>transient</code>.</em></p>
 
 
 

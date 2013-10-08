@@ -1,31 +1,31 @@
 body {
-  font-family: Helvetica, Arial, sans-serif;
+  font-family: 'HelveticaNeue-Light', Helvetica, Arial, sans-serif;
   font-size: 14px;
   line-height: 1.4em;
   min-width: 1100px;
 }
 #header {
-  background: #f1c40f;
-  background: -moz-linear-gradient(top, #f1c40f 0%, #eaa800 100%);
-  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #f1c40f), color-stop(100%, #eaa800));
-  border-bottom: 3px solid #eabb12;
+  background: #222222;
+  background: -moz-linear-gradient(top, #222222 0%, #111111 100%);
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #222222), color-stop(100%, #111111));
+  border-bottom: 3px solid #111111;
   display: block;
   position: relative;
   padding: 10px 20px;
 }
 #header h1 {
   font-size: 37px;
+  font-weight: normal;
   line-height: 46px;
-  text-shadow: #aaa 1px 1px 2px;
 }
 #header h1 a {
-  color: #333333;
+  color: #ffffff;
   text-decoration: none;
 }
 #header #menu {
   position: absolute;
   top: 25px;
-  right: 20px;
+  right: 10px;
 }
 #header #menu a {
   background: #f78d1d;
@@ -65,7 +65,7 @@ body {
 }
 #sidebar #toc li {
   font-size: 16px;
-  margin: 14px 0px;
+  margin: 5px 0px;
 }
 #sidebar #toc li a {
   color: #555;
@@ -73,7 +73,7 @@ body {
 }
 #sidebar #toc > ol > li {
   font-weight: bold;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 }
 #sidebar #toc > ol > li li {
   font-weight: normal;
@@ -101,14 +101,15 @@ body {
   padding: 10px 40px 80px 30px;
   width: 700px;
 }
-#content h1 {
-  font-size: 32px;
-  line-height: 35px;
-  margin: 15px 0 25px 0;
-}
-#content h2 {
+#content h1,
+#content h2,
+#content h3,
+#content h4,
+#content h5,
+#content h6 {
   border-bottom: 2px solid #ccc;
   font-size: 24px;
+  font-weight: normal;
   margin: 30px 0 15px 0;
   padding-bottom: 7px;
 }
@@ -193,7 +194,7 @@ body {
   clear: both;
   color: #999;
   display: block;
-  padding: 10px;
+  padding: 5px;
 }
 #footer a {
   color: #999;

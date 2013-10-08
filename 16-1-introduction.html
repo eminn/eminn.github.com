@@ -949,52 +949,35 @@
 </div>
 
         <div id="content">
-            <a name="introduction"></a><h1>Introduction</h1>
-<p>Hazelcast is a clustering and highly scalable data distribution platform for Java. Hazelcast helps architects and developers to easily design and develop faster, highly scalable and reliable applications for their businesses.</p>
+            <a name="introduction"></a><h2>Introduction</h2>
+<p>Hazelcast Management Center enables you to monitor and manage your servers running hazelcast. With Management Center, in addition to monitoring overall state of your clusters, you can also analyze and browse your data structures in details. You can also update map configurations and take thread dump from nodes. With its scripting module, you can run scritps (JavaScript, Groovy etc.) on your servers. Version 2.0 is a web based tool so you can deploy it into your internal server and serve your users.</p>
+<a name="installation"></a><h3>Installation</h3>
+<p>It is important to understand how it actually works. Basically you will deploy <code>mancenter.war</code> application into your Java web server and then tell Hazelcast nodes to talk to that web application. That means, your Hazelcast nodes should know the URL of <code>mancenter</code> application before they start.</p>
+<p>Here are the steps:</p>
 <ul>
-<li><p>Distributed implementations of <code>java.util.{Queue, Set, List, Map}</code></p>
+<li><p>Download the latest Hazelcast zip from <a href="http://www.hazelcast.com/downloads.jsp">hazelcast.com</a></p>
 </li>
-<li><p>Distributed implementation of <code>java.util.concurrent.ExecutorService</code></p>
+<li><p>Zip contains <code>mancenter.war</code> file. Deploy it to your web server (Tomcat, Jetty etc.) Let&#39;s say it is running at<code>http://localhost:8080/mancenter</code>.</p>
 </li>
-<li><p>Distributed implementation of <code>java.util.concurrency.locks.Lock</code></p>
+<li><p>Start your web server and make sure <code>http://localhost:8080/mancenter</code> is up.</p>
 </li>
-<li><p>Distributed <code>Topic</code> for publish/subscribe messaging</p>
-</li>
-<li><p>Transaction support and J2EE container integration via JCA</p>
-</li>
-<li><p>Distributed listeners and events</p>
-</li>
-<li><p>Support for cluster info and membership events</p>
-</li>
-<li><p>Dynamic HTTP session clustering</p>
-</li>
-<li><p>Dynamic clustering</p>
-</li>
-<li><p>Dynamic scaling to hundreds of servers</p>
-</li>
-<li><p>Dynamic partitioning with backups</p>
-</li>
-<li><p>Dynamic fail-over</p>
-</li>
-<li><p>Super simple to use; include a single jar</p>
-</li>
-<li><p>Super fast; thousands of operations per sec.</p>
-</li>
-<li><p>Super small; less than a MB</p>
-</li>
-<li><p>Super efficient; very nice to CPU and RAM</p>
+<li><p>Configure your Hazelcast nodes by adding the URL of your web app to your <code>hazelcast.xml</code>. Hazelcast nodes will send their states to this URL.</p>
 </li>
 </ul>
-<p>To install Hazelcast:</p>
+<pre><code class="lang-xml">&lt;management-center enabled=&quot;true&quot;&gt;http://localhost:8080/mancenter&lt;/management-center&gt;</code></pre>
 <ul>
-<li><p>Download hazelcast-_version_.zip from <a href="http://www.hazelcast.com">www.hazelcast.com</a></p>
+<li><p>Start your hazelcast cluster.</p>
 </li>
-<li><p>Unzip hazelcast-_version_.zip file</p>
-</li>
-<li><p>Add hazelcast.jar file into your classpath</p>
+<li><p>Browse to <code>http://localhost:8080/mancenter</code> and login. <strong>Initial login username/passwords is <code>admin/admin</code></strong></p>
 </li>
 </ul>
-<p>Hazelcast is pure Java. JVMs that are running Hazelcast will dynamically cluster. Although by default Hazelcast will use multicast for discovery, it can also be configured to only use TCP/IP for environments where multicast is not available or preferred (<a href="#configuring-tcpip-cluster">Click here for more info</a>). Communication among cluster members is always TCP/IP with Java NIO beauty. Default configuration comes with 1 backup so if one node fails, no data will be lost. It is as simple as using<code>java.util.{Queue, Set, List, Map}</code>. Just add the hazelcast.jar into your classpath and start coding.</p>
+<p><em>Management Center creates a directory with name &quot;mancenter&quot; under your &quot;user/home&quot; directory to save data files. You can change the data directory setting &quot;hazelcast.mancenter.home&quot; system property.</em></p>
+<a name="user-administration"></a><h3>User Administration</h3>
+<p>Default credentials are for the admin user. In the <code>Administration</code> tab, Admin can add/remove/update users and control user read/write permissions.</p>
+<p><img src="images/admin.jpg" alt=""></p>
+<a name="tool-overview"></a><h3>Tool Overview</h3>
+<p>The starter page of the tool is<code>Cluster Home</code>. Here you can see cluster&#39;s main properties such as uptime, memory. Also with pie chart, you can see the distribution of partitions over cluster members. You can come back to this page, by clicking the <code>Home</code> icon on the top-right toolbar. On the left panel you see the Map/Queue/Topic instances in the cluster. At the bottom-left corner, members of the cluster are listed. On top menu bar, you can change the current tab to<code>Scripting, Docs</code>, user<code>Administration</code>. Note that Administration tab is viewable only for admin users. Also <code>Scripting</code> page is disabled for users with read-only credential.</p>
+<p><img src="images/clusterhome.jpg" alt=""></p>
 
 
 

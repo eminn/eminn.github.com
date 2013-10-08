@@ -949,52 +949,102 @@
 </div>
 
         <div id="content">
-            <a name="introduction"></a><h1>Introduction</h1>
-<p>Hazelcast is a clustering and highly scalable data distribution platform for Java. Hazelcast helps architects and developers to easily design and develop faster, highly scalable and reliable applications for their businesses.</p>
+            <a name="upgrading-from-2x-versions"></a><h2>Upgrading from 2.x versions</h2>
+<p>In this section, we list the changes what users should take into account before upgrading to Hazelcast 3.0 from earlier versions of Hazelcast.</p>
 <ul>
-<li><p>Distributed implementations of <code>java.util.{Queue, Set, List, Map}</code></p>
+<li>Removal of deprecated static methods:
+The static methods of Hazelcast class reaching hazelcast data components have been removed. The functionality of these methods can be reached from HazelcastInstance interface. Namely you should replace following:</li>
+</ul>
+<pre><code class="lang-java">Map&lt;Integer, String&gt; mapCustomers = Hazelcast.getMap(&quot;customers&quot;);</code></pre>
+<p>with</p>
+<pre><code class="lang-java">HazelcastInstance instance = Hazelcast.newHazelcastInstance(cfg);
+// or if you already started an instance
+// HazelcastInstance instance = Hazelcast.getHazelcastInstanceByName(&quot;instance1&quot;);
+Map&lt;Integer, String&gt; mapCustomers = instance.getMap(&quot;customers&quot;);</code></pre>
+<ul>
+<li><p>Removal of lite members:
+With 3.0 there will be no member type as lite member. As 3.0 clients are smart client that they know in which node the data is located, you can replace your lite members with native clients.</p>
 </li>
-<li><p>Distributed implementation of <code>java.util.concurrent.ExecutorService</code></p>
-</li>
-<li><p>Distributed implementation of <code>java.util.concurrency.locks.Lock</code></p>
-</li>
-<li><p>Distributed <code>Topic</code> for publish/subscribe messaging</p>
-</li>
-<li><p>Transaction support and J2EE container integration via JCA</p>
-</li>
-<li><p>Distributed listeners and events</p>
-</li>
-<li><p>Support for cluster info and membership events</p>
-</li>
-<li><p>Dynamic HTTP session clustering</p>
-</li>
-<li><p>Dynamic clustering</p>
-</li>
-<li><p>Dynamic scaling to hundreds of servers</p>
-</li>
-<li><p>Dynamic partitioning with backups</p>
-</li>
-<li><p>Dynamic fail-over</p>
-</li>
-<li><p>Super simple to use; include a single jar</p>
-</li>
-<li><p>Super fast; thousands of operations per sec.</p>
-</li>
-<li><p>Super small; less than a MB</p>
-</li>
-<li><p>Super efficient; very nice to CPU and RAM</p>
+<li><p>Renaming &quot;instance&quot; to &quot;distributed object&quot;:
+Before 3.0 there was a confusion for the term &quot;instance&quot;. It was used for both the cluster members and the distributed objects (map, queue, topic etc. instances). Starting 3.0, the term instance will be only used for hazelcast instances, namely cluster members. We will use the term &quot;distributed object&quot; for map, queue etc. instances. So you should replace the related methods with the new renamed ones: As 3.0 clients are smart client that they know in which node the data is located, you can replace your lite members with native clients.</p>
 </li>
 </ul>
-<p>To install Hazelcast:</p>
+<pre><code class="lang-java">public static void main(String[] args) throws InterruptedException {
+    Config cfg = new Config();
+    HazelcastInstance hz = Hazelcast.newHazelcastInstance(cfg);
+    IMap map = hz.getMap(&quot;test&quot;);
+    Collection&lt;Instance&gt; instances = hz.getInstances();
+    for (Instance instance : instances) {
+        if(instance.getInstanceType() == Instance.InstanceType.MAP) {
+        System.out.println(&quot;there is a map with name:&quot;+instance.getId());
+        }
+    }
+}</code></pre>
+<p>with</p>
+<pre><code class="lang-java">public static void main(String[] args) throws InterruptedException {
+    Config cfg = new Config();
+    HazelcastInstance hz = Hazelcast.newHazelcastInstance(cfg);
+    IMap map = hz.getMap(&quot;test&quot;);
+    Collection&lt;DistributedObject&gt; distributedObjects = hz.getDistributedObjects();
+        for (DistributedObject distributedObject : distributedObjects) {
+            if(distributedObject instanceof IMap)
+            System.out.println(&quot;there is a map with name:&quot;+distributedObject.getName());
+        }
+}</code></pre>
 <ul>
-<li><p>Download hazelcast-_version_.zip from <a href="http://www.hazelcast.com">www.hazelcast.com</a></p>
+<li><p>Package structure change:
+PartitionService has been moved to package &quot;com.hazelcast.core&quot; from &quot;com.hazelcast.partition&quot;</p>
 </li>
-<li><p>Unzip hazelcast-_version_.zip file</p>
-</li>
-<li><p>Add hazelcast.jar file into your classpath</p>
+<li><p>Listener API change:
+Before 3.0, you can removeListener methods was taking the Listener object as parameter. But it causes confusion as same listener object may be used as parameter for different listener registrations. So we have changed the listener API. Anymore, addListener methods return you an unique id and you can remove listener by using this id. So you should do following replacement if needed:</p>
 </li>
 </ul>
-<p>Hazelcast is pure Java. JVMs that are running Hazelcast will dynamically cluster. Although by default Hazelcast will use multicast for discovery, it can also be configured to only use TCP/IP for environments where multicast is not available or preferred (<a href="#configuring-tcpip-cluster">Click here for more info</a>). Communication among cluster members is always TCP/IP with Java NIO beauty. Default configuration comes with 1 backup so if one node fails, no data will be lost. It is as simple as using<code>java.util.{Queue, Set, List, Map}</code>. Just add the hazelcast.jar into your classpath and start coding.</p>
+<pre><code class="lang-java">IMap map = instance.getMap(&quot;map&quot;);
+map.addEntryListener(listener,true);
+map.removeEntryListener(listener);</code></pre>
+<p>with</p>
+<pre><code class="lang-java">IMap map = instance.getMap(&quot;map&quot;);
+String listenerId = map.addEntryListener(listener, true);
+map.removeEntryListener(listenerId);</code></pre>
+<ul>
+<li><p>IMap changes:</p>
+<ul>
+<li><p>tryRemove(K key, long timeout, TimeUnit timeunit) returns boolean indicating whether operation is successful.</p>
+</li>
+<li><p>tryLockAndGet(K key, long time, TimeUnit timeunit) is removed.</p>
+</li>
+<li><p>putAndUnlock(K key, V value) is removed.</p>
+</li>
+<li><p>lockMap(long time, TimeUnit timeunit) and unlockMap() are removed</p>
+</li>
+<li><p>getMapEntry(K key) is renamed as getEntryView(K key). The returned object&#39;s type, MapEntry class is renamed as EntryView.</p>
+</li>
+<li><p>There is no predefined names for merge policies. You just give the full class name of the merge policy implementation.</p>
+</li>
+</ul>
+</li>
+</ul>
+<pre><code class="lang-xml">&lt;merge-policy&gt;com.hazelcast.map.merge.PassThroughMergePolicy&lt;/merge-policy&gt;</code></pre>
+<p>Also MergePolicy interface has been renamed to MapMergePolicy and also returning null from the implemented merge() method causes the existing entry to be removed.</p>
+<ul>
+<li><p>IQueue changes:
+There is no change on IQueue API but there are changes on how IQueue is configured. With Hazelcast 3.0 there will not be backing map configuration for queue. Settings like backup count will be directly configured on queue config. For queue configuration details, see <a href="#distributed-queue">Distributed Queue</a> page.</p>
+</li>
+<li><p>Transaction API change:
+In Hazelcast 3.0, transaction API is completely different. See transactions part for the new API: <a href="#transactions">Distributed Transactions</a></p>
+</li>
+<li><p>ExecutorService API change:
+Classes MultiTask and DistributedTask have been removed. All the functionality is supported by the newly presented interface IExecutorService. See distributed execution part for detailed usage example: <a href="#distributed-execution">Distributed Execution</a></p>
+</li>
+<li><p>LifeCycleService API has been simplified. pause(), resume(), restart() methods have been removed.</p>
+</li>
+<li><p>AtomicNumber class has been renamed to IAtomicLong.</p>
+</li>
+<li><p>ICountDownLatch await() operation has been removed. We expect users to use await method with timeout parameters.</p>
+</li>
+<li><p>ISemaphore API has been substantially changed. attach(), detach() methods have been removed.</p>
+</li>
+</ul>
 
 
 

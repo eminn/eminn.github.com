@@ -949,52 +949,179 @@
 </div>
 
         <div id="content">
-            <a name="introduction"></a><h1>Introduction</h1>
-<p>Hazelcast is a clustering and highly scalable data distribution platform for Java. Hazelcast helps architects and developers to easily design and develop faster, highly scalable and reliable applications for their businesses.</p>
-<ul>
-<li><p>Distributed implementations of <code>java.util.{Queue, Set, List, Map}</code></p>
-</li>
-<li><p>Distributed implementation of <code>java.util.concurrent.ExecutorService</code></p>
-</li>
-<li><p>Distributed implementation of <code>java.util.concurrency.locks.Lock</code></p>
-</li>
-<li><p>Distributed <code>Topic</code> for publish/subscribe messaging</p>
-</li>
-<li><p>Transaction support and J2EE container integration via JCA</p>
-</li>
-<li><p>Distributed listeners and events</p>
-</li>
-<li><p>Support for cluster info and membership events</p>
-</li>
-<li><p>Dynamic HTTP session clustering</p>
-</li>
-<li><p>Dynamic clustering</p>
-</li>
-<li><p>Dynamic scaling to hundreds of servers</p>
-</li>
-<li><p>Dynamic partitioning with backups</p>
-</li>
-<li><p>Dynamic fail-over</p>
-</li>
-<li><p>Super simple to use; include a single jar</p>
-</li>
-<li><p>Super fast; thousands of operations per sec.</p>
-</li>
-<li><p>Super small; less than a MB</p>
-</li>
-<li><p>Super efficient; very nice to CPU and RAM</p>
-</li>
-</ul>
-<p>To install Hazelcast:</p>
-<ul>
-<li><p>Download hazelcast-_version_.zip from <a href="http://www.hazelcast.com">www.hazelcast.com</a></p>
-</li>
-<li><p>Unzip hazelcast-_version_.zip file</p>
-</li>
-<li><p>Add hazelcast.jar file into your classpath</p>
-</li>
-</ul>
-<p>Hazelcast is pure Java. JVMs that are running Hazelcast will dynamically cluster. Although by default Hazelcast will use multicast for discovery, it can also be configured to only use TCP/IP for environments where multicast is not available or preferred (<a href="#configuring-tcpip-cluster">Click here for more info</a>). Communication among cluster members is always TCP/IP with Java NIO beauty. Default configuration comes with 1 backup so if one node fails, no data will be lost. It is as simple as using<code>java.util.{Queue, Set, List, Map}</code>. Just add the hazelcast.jar into your classpath and start coding.</p>
+            <a name="interceptors"></a><h3>Interceptors</h3>
+<p>Another new feature with version 3.0 is the interceptors. You can add intercept operations and execute your own business logic synchronously blocking the operation. You can change the returned value from a get operation, change the value to be put or cancel operations by throwing exception.</p>
+<p>Interceptors are different from listeners as with listeners you just take an action after the operation has been completed. Interceptor actions are synchronous and you can alter the behaviour of operation, change the values or totally cancel it.</p>
+<p>IMap API has two method for adding and removing interceptor to the map.</p>
+<pre><code class="lang-java">/**
+ * Adds an interceptor for this map. Added interceptor will intercept operations
+ * and execute user defined methods and will cancel operations if user defined method throw exception.
+ * 
+ *
+ * @param interceptor map interceptor
+ * @return id of registered interceptor
+ */
+String addInterceptor(MapInterceptor interceptor);
+
+/**
+ * Removes the given interceptor for this map. So it will not intercept operations anymore.
+ * 
+ *
+ * @param id registration id of map interceptor
+ */
+void removeInterceptor(String id);</code></pre>
+<p>Here MapInterceptor interface:</p>
+<pre><code class="lang-java">
+public interface MapInterceptor extends Serializable {
+
+    /**
+     * Intercept get operation before returning value.
+     * Return another object to change the return value of get(..)
+     * Returning null will cause the get(..) operation return original value, namely return null if you do not want to change anything.
+     * 
+     *
+     * @param value the original value to be returned as the result of get(..) operation
+     * @return the new value that will be returned by get(..) operation
+     */
+    Object interceptGet(Object value);
+
+    /**
+     * Called after get(..) operation is completed.
+     * 
+     *
+     * @param value the value returned as the result of get(..) operation
+     */
+    void afterGet(Object value);
+
+    /**
+     * Intercept put operation before modifying map data.
+     * Return the object to be put into the map.
+     * Returning null will cause the put(..) operation to operate as expected, namely no interception.
+     * Throwing an exception will cancel the put operation.
+     * 
+     *
+     * @param oldValue the value currently in map
+     * @param newValue the new value to be put
+     * @return new value after intercept operation
+     */
+    Object interceptPut(Object oldValue, Object newValue);
+
+    /**
+     * Called after put(..) operation is completed.
+     * 
+     *
+     * @param value the value returned as the result of put(..) operation
+     */
+    void afterPut(Object value);
+
+    /**
+     * Intercept remove operation before removing the data.
+     * Return the object to be returned as the result of remove operation.
+     * Throwing an exception will cancel the remove operation.
+     * 
+     *
+     * @param removedValue the existing value to be removed
+     * @return the value to be returned as the result of remove operation
+     */
+    Object interceptRemove(Object removedValue);
+
+    /**
+     * Called after remove(..) operation is completed.
+     * 
+     *
+     * @param value the value returned as the result of remove(..) operation
+     */
+    void afterRemove(Object value);
+
+}</code></pre>
+<p><strong>Example Usage:</strong></p>
+<pre><code class="lang-java">public class InterceptorTest {
+    final String mapName = &quot;map&quot;;
+
+    @Test
+    public void testMapInterceptor() throws InterruptedException {
+        Config cfg = new Config();
+        HazelcastInstance instance1 = Hazelcast.newHazelcastInstance(cfg);
+        HazelcastInstance instance2 = Hazelcast.newHazelcastInstance(cfg);
+        final IMap&lt;Object, Object&gt; map = instance1.getMap(&quot;testMapInterceptor&quot;);
+        SimpleInterceptor interceptor = new SimpleInterceptor();
+        map.addInterceptor(interceptor);
+        map.put(1, &quot;New York&quot;);
+        map.put(2, &quot;Istanbul&quot;);
+        map.put(3, &quot;Tokyo&quot;);
+        map.put(4, &quot;London&quot;);
+        map.put(5, &quot;Paris&quot;);
+        map.put(6, &quot;Cairo&quot;);
+        map.put(7, &quot;Hong Kong&quot;);
+
+        try {
+            map.remove(1);
+        } catch (Exception ignore) {
+        }
+        try {
+            map.remove(2);
+        } catch (Exception ignore) {
+        }
+
+        assertEquals(map.size(), 6);
+
+        assertEquals(map.get(1), null);
+        assertEquals(map.get(2), &quot;ISTANBUL:&quot;);
+        assertEquals(map.get(3), &quot;TOKYO:&quot;);
+        assertEquals(map.get(4), &quot;LONDON:&quot;);
+        assertEquals(map.get(5), &quot;PARIS:&quot;);
+        assertEquals(map.get(6), &quot;CAIRO:&quot;);
+        assertEquals(map.get(7), &quot;HONG KONG:&quot;);
+
+        map.removeInterceptor(interceptor);
+        map.put(8, &quot;Moscow&quot;);
+
+        assertEquals(map.get(8), &quot;Moscow&quot;);
+        assertEquals(map.get(1), null);
+        assertEquals(map.get(2), &quot;ISTANBUL&quot;);
+        assertEquals(map.get(3), &quot;TOKYO&quot;);
+        assertEquals(map.get(4), &quot;LONDON&quot;);
+        assertEquals(map.get(5), &quot;PARIS&quot;);
+        assertEquals(map.get(6), &quot;CAIRO&quot;);
+        assertEquals(map.get(7), &quot;HONG KONG&quot;);
+
+    }
+
+    static class SimpleInterceptor implements MapInterceptor, Serializable {
+
+        @Override
+        public Object interceptGet(Object value) {
+            if(value == null)
+                return null;
+            return value + &quot;:&quot;;
+        }
+
+        @Override
+        public void afterGet(Object value) {
+        }
+
+        @Override
+        public Object interceptPut(Object oldValue, Object newValue) {
+            return newValue.toString().toUpperCase();
+        }
+
+        @Override
+        public void afterPut(Object value) {
+        }
+
+        @Override
+        public Object interceptRemove(Object removedValue) {
+            if(removedValue.equals(&quot;ISTANBUL&quot;))
+                throw new RuntimeException(&quot;you can not remove this&quot;);
+            return removedValue;
+        }
+
+        @Override
+        public void afterRemove(Object value) {
+            // do something
+        }
+    }
+}</code></pre>
 
 
 

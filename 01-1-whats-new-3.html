@@ -949,52 +949,60 @@
 </div>
 
         <div id="content">
-            <a name="introduction"></a><h1>Introduction</h1>
-<p>Hazelcast is a clustering and highly scalable data distribution platform for Java. Hazelcast helps architects and developers to easily design and develop faster, highly scalable and reliable applications for their businesses.</p>
+            <a name="whats-new-in-30"></a><h2>What&#39;s new in 3.0?</h2>
+<p><strong>Core architecture:</strong></p>
 <ul>
-<li><p>Distributed implementations of <code>java.util.{Queue, Set, List, Map}</code></p>
-</li>
-<li><p>Distributed implementation of <code>java.util.concurrent.ExecutorService</code></p>
-</li>
-<li><p>Distributed implementation of <code>java.util.concurrency.locks.Lock</code></p>
-</li>
-<li><p>Distributed <code>Topic</code> for publish/subscribe messaging</p>
-</li>
-<li><p>Transaction support and J2EE container integration via JCA</p>
-</li>
-<li><p>Distributed listeners and events</p>
-</li>
-<li><p>Support for cluster info and membership events</p>
-</li>
-<li><p>Dynamic HTTP session clustering</p>
-</li>
-<li><p>Dynamic clustering</p>
-</li>
-<li><p>Dynamic scaling to hundreds of servers</p>
-</li>
-<li><p>Dynamic partitioning with backups</p>
-</li>
-<li><p>Dynamic fail-over</p>
-</li>
-<li><p>Super simple to use; include a single jar</p>
-</li>
-<li><p>Super fast; thousands of operations per sec.</p>
-</li>
-<li><p>Super small; less than a MB</p>
-</li>
-<li><p>Super efficient; very nice to CPU and RAM</p>
-</li>
+<li>Multi-thread execution: Operations are now executed by multiple threads (by factor of processor cores). With Hazelcast 2, there was a only single thread.</li>
+<li>SPI
+: Service Programming Interface for developing new partitioned services, data structures. All Hazelcast data structures like Map, Queue are reimplemented with SPI.</li>
 </ul>
-<p>To install Hazelcast:</p>
+<p><strong>Serialization</strong></p>
 <ul>
-<li><p>Download hazelcast-_version_.zip from <a href="http://www.hazelcast.com">www.hazelcast.com</a></p>
-</li>
-<li><p>Unzip hazelcast-_version_.zip file</p>
-</li>
-<li><p>Add hazelcast.jar file into your classpath</p>
-</li>
+<li>IdentifiedDataSerializable
+: A slightly optimized version of DataSerializable that doesn&#39;t use class name and reflection for de-serialization.</li>
+<li>Portable Serialization
+: Another Serialization interface that doesn&#39;t use reflection and can navigate through binary data and fetch/query/index individual field without having any reflection or whole object de-serialization.</li>
+<li>Custom Serialization
+: Support for custom serialization that can be plugged into Hazelcast.</li>
 </ul>
-<p>Hazelcast is pure Java. JVMs that are running Hazelcast will dynamically cluster. Although by default Hazelcast will use multicast for discovery, it can also be configured to only use TCP/IP for environments where multicast is not available or preferred (<a href="#configuring-tcpip-cluster">Click here for more info</a>). Communication among cluster members is always TCP/IP with Java NIO beauty. Default configuration comes with 1 backup so if one node fails, no data will be lost. It is as simple as using<code>java.util.{Queue, Set, List, Map}</code>. Just add the hazelcast.jar into your classpath and start coding.</p>
+<p><strong>Map</strong></p>
+<ul>
+<li>Entry Processor
+: Executing an EntryProcessor on the key or on all entries. Hazelcast implicitly locks the entree and guarantees no migration while the execution of the Processor.</li>
+<li>In Memory Format
+: Support for storing entries in Binary, Object and Cached format.</li>
+<li>Continuous Query
+: Support for listeners that register with a query and are notified when there is a change on the Map that matches the Query.</li>
+<li>Interceptors
+: Ability to intercept the Map operation before/after it is actually executed.</li>
+<li>Lazy Indexing
+:Ability to index existing items in the map. No need to add indexes at the very beginning.</li>
+</ul>
+<p><strong>Queue</strong></p>
+<ul>
+<li>No more dependency on the distributed map</li>
+<li>Scales really well as you have thousands of separate queues.</li>
+<li>Persistence
+Support for persistence with QueueStore.</li>
+</ul>
+<p><strong>Multimap</strong></p>
+<ul>
+<li>Values can be Set/List/Queue.</li>
+</ul>
+<p><strong>Topic</strong></p>
+<ul>
+<li>Total Ordering : Support for global ordering where all Nodes receive all messages in the same order.</li>
+</ul>
+<p><strong>Transactions</strong></p>
+<ul>
+<li>Distributed Transaction
+: Support for both 1-phase (local) and 2 phase transactions with a totally new API.</li>
+</ul>
+<p><strong>Client</strong></p>
+<ul>
+<li>New Binary Protocol: A new binary protocol based on portable serialization. The same protocol is used for Java/C/C# and other client</li>
+<li>Smart client: Support for dummy and smart client. Where a dummy client will maintain a connection to only one member, whereas the smart client can route the operations to the Node that owns the data.</li>
+</ul>
 
 
 

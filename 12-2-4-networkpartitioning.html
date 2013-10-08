@@ -949,52 +949,77 @@
 </div>
 
         <div id="content">
-            <a name="introduction"></a><h1>Introduction</h1>
-<p>Hazelcast is a clustering and highly scalable data distribution platform for Java. Hazelcast helps architects and developers to easily design and develop faster, highly scalable and reliable applications for their businesses.</p>
-<ul>
-<li><p>Distributed implementations of <code>java.util.{Queue, Set, List, Map}</code></p>
+            <a name="network-partitioning-split-brain-syndrome"></a><h3>Network Partitioning (Split-Brain Syndrome)</h3>
+<p>Imagine that you have 10-node cluster and for some reason the network is divided into two in a way that 4 servers cannot see the other 6. As a result you ended up having two separate clusters; 4-node cluster and 6-node cluster. Members in each sub-cluster are thinking that the other nodes are dead even though they are not. This situation is called Network Partitioning (aka Split-Brain Syndrome).</p>
+<p>Since it is a network failure, there is no way to avoid it programatically and your application will run as two separate independent clusters but we should be able to answer the following questions: &quot;What will happen after the network failure is fixed and connectivity is restored between these two clusters? Will these two clusters merge into one again? If they do, how are the data conflicts resolved, because you might end up having two different values for the same key in the same map?&quot;</p>
+<p>Here is how Hazelcast deals with it:</p>
+<ol>
+<li><p>The oldest member of the cluster checks if there is another cluster with the same group-name and group-password in the network.</p>
 </li>
-<li><p>Distributed implementation of <code>java.util.concurrent.ExecutorService</code></p>
+<li><p>If the oldest member founds such cluster, then figures out which cluster should merge to the other.</p>
 </li>
-<li><p>Distributed implementation of <code>java.util.concurrency.locks.Lock</code></p>
+<li><p>Each member of the merging cluster will do the following:</p>
 </li>
-<li><p>Distributed <code>Topic</code> for publish/subscribe messaging</p>
+<li><p>pause</p>
 </li>
-<li><p>Transaction support and J2EE container integration via JCA</p>
+<li><p>take locally owned map entries</p>
 </li>
-<li><p>Distributed listeners and events</p>
+<li><p>close all its network connections (detach from its cluster)</p>
 </li>
-<li><p>Support for cluster info and membership events</p>
+<li><p>join to the new cluster</p>
 </li>
-<li><p>Dynamic HTTP session clustering</p>
+<li><p>send merge request for each its locally owned map entry</p>
 </li>
-<li><p>Dynamic clustering</p>
+<li><p>resume</p>
 </li>
-<li><p>Dynamic scaling to hundreds of servers</p>
-</li>
-<li><p>Dynamic partitioning with backups</p>
-</li>
-<li><p>Dynamic fail-over</p>
-</li>
-<li><p>Super simple to use; include a single jar</p>
-</li>
-<li><p>Super fast; thousands of operations per sec.</p>
-</li>
-<li><p>Super small; less than a MB</p>
-</li>
-<li><p>Super efficient; very nice to CPU and RAM</p>
-</li>
-</ul>
-<p>To install Hazelcast:</p>
-<ul>
-<li><p>Download hazelcast-_version_.zip from <a href="http://www.hazelcast.com">www.hazelcast.com</a></p>
-</li>
-<li><p>Unzip hazelcast-_version_.zip file</p>
-</li>
-<li><p>Add hazelcast.jar file into your classpath</p>
-</li>
-</ul>
-<p>Hazelcast is pure Java. JVMs that are running Hazelcast will dynamically cluster. Although by default Hazelcast will use multicast for discovery, it can also be configured to only use TCP/IP for environments where multicast is not available or preferred (<a href="#configuring-tcpip-cluster">Click here for more info</a>). Communication among cluster members is always TCP/IP with Java NIO beauty. Default configuration comes with 1 backup so if one node fails, no data will be lost. It is as simple as using<code>java.util.{Queue, Set, List, Map}</code>. Just add the hazelcast.jar into your classpath and start coding.</p>
+</ol>
+<p>So each member of the merging cluster is actually rejoining to the new cluster and sending merge request for each its locally owned map entry.</p>
+<p><strong><em>Q: Which cluster will merge into the other?</em></strong></p>
+<p>A. Smaller cluster will merge into the bigger one. If they have equal number of members then a hashing algorithm determines the merging cluster.</p>
+<p><strong><em>Q. Each cluster may have different versions of the same key in the same map. How is the conflict resolved?</em></strong></p>
+<p>A. Destination cluster will decide how to handle merging entry based on the <code>MergePolicy</code> set for that map. There are built-in merge policies such as <code>PassThroughMergePolicy, PutIfAbsentMapMergePolicy, HigherHitsMapMergePolicy and LatestUpdateMapMergePolicy</code> but you can develop your own merge policy by implementing <code>com.hazelcast.map.merge.MapMergePolicy</code>. You should set the full class name of your implementation to the merge-policy configuration.</p>
+<pre><code class="lang-java">public interface MergePolicy {
+    /**
+    * Returns the value of the entry after the merge
+    * of entries with the same key. Returning value can be
+    * You should consider the case where existingEntry is null.
+    *
+    * @param mapName       name of the map
+    * @param mergingEntry  entry merging into the destination cluster
+    * @param existingEntry existing entry in the destination cluster
+    * @return final value of the entry. If returns null then entry will be removed.
+    */
+    Object merge(String mapName, EntryView mergingEntry, EntryView existingEntry);
+}</code></pre>
+<p>Here is how merge policies are specified per map.</p>
+<pre><code class="lang-xml">&lt;hazelcast&gt;
+    ...
+    &lt;map name=&quot;default&quot;&gt;
+        &lt;backup-count&gt;1&lt;/backup-count&gt;
+        &lt;eviction-policy&gt;NONE&lt;/eviction-policy&gt;
+        &lt;max-size&gt;0&lt;/max-size&gt;
+        &lt;eviction-percentage&gt;25&lt;/eviction-percentage&gt;
+        &lt;!--
+            While recovering from split-brain (network partitioning),
+            map entries in the small cluster will merge into the bigger cluster
+            based on the policy set here. When an entry merge into the
+            cluster, there might an existing entry with the same key already.
+            Values of these entries might be different for that same key.
+            Which value should be set for the key? Conflict is resolved by
+            the policy set here. Default policy is hz.ADD_NEW_ENTRY
+
+            There are built-in merge policies such as
+            There are built-in merge policies such as
+            com.hazelcast.map.merge.PassThroughMergePolicy; entry will be added if there is no existing entry for the key.
+            com.hazelcast.map.merge.PutIfAbsentMapMergePolicy ; entry will be added if the merging entry doesn&#39;t exist in the cluster.
+            com.hazelcast.map.merge.HigherHitsMapMergePolicy ; entry with the higher hits wins.
+            com.hazelcast.map.merge.LatestUpdateMapMergePolicy ; entry with the latest update wins.
+        --&gt;
+        &lt;merge-policy&gt;MY_MERGE_POLICY_CLASS&lt;/merge-policy&gt;
+    &lt;/map&gt;
+
+    ...
+&lt;/hazelcast&gt;</code></pre>
 
 
 

@@ -949,52 +949,85 @@
 </div>
 
         <div id="content">
-            <a name="introduction"></a><h1>Introduction</h1>
-<p>Hazelcast is a clustering and highly scalable data distribution platform for Java. Hazelcast helps architects and developers to easily design and develop faster, highly scalable and reliable applications for their businesses.</p>
-<ul>
-<li><p>Distributed implementations of <code>java.util.{Queue, Set, List, Map}</code></p>
-</li>
-<li><p>Distributed implementation of <code>java.util.concurrent.ExecutorService</code></p>
-</li>
-<li><p>Distributed implementation of <code>java.util.concurrency.locks.Lock</code></p>
-</li>
-<li><p>Distributed <code>Topic</code> for publish/subscribe messaging</p>
-</li>
-<li><p>Transaction support and J2EE container integration via JCA</p>
-</li>
-<li><p>Distributed listeners and events</p>
-</li>
-<li><p>Support for cluster info and membership events</p>
-</li>
-<li><p>Dynamic HTTP session clustering</p>
-</li>
-<li><p>Dynamic clustering</p>
-</li>
-<li><p>Dynamic scaling to hundreds of servers</p>
-</li>
-<li><p>Dynamic partitioning with backups</p>
-</li>
-<li><p>Dynamic fail-over</p>
-</li>
-<li><p>Super simple to use; include a single jar</p>
-</li>
-<li><p>Super fast; thousands of operations per sec.</p>
-</li>
-<li><p>Super small; less than a MB</p>
-</li>
-<li><p>Super efficient; very nice to CPU and RAM</p>
-</li>
-</ul>
-<p>To install Hazelcast:</p>
-<ul>
-<li><p>Download hazelcast-_version_.zip from <a href="http://www.hazelcast.com">www.hazelcast.com</a></p>
-</li>
-<li><p>Unzip hazelcast-_version_.zip file</p>
-</li>
-<li><p>Add hazelcast.jar file into your classpath</p>
-</li>
-</ul>
-<p>Hazelcast is pure Java. JVMs that are running Hazelcast will dynamically cluster. Although by default Hazelcast will use multicast for discovery, it can also be configured to only use TCP/IP for environments where multicast is not available or preferred (<a href="#configuring-tcpip-cluster">Click here for more info</a>). Communication among cluster members is always TCP/IP with Java NIO beauty. Default configuration comes with 1 backup so if one node fails, no data will be lost. It is as simple as using<code>java.util.{Queue, Set, List, Map}</code>. Just add the hazelcast.jar into your classpath and start coding.</p>
+            <a name="console"></a><h2>Console</h2>
+<p>The console tool enables you execute commands on the cluster. You can read or write on instances but first you should set namespace. For example if you have a map with name &quot;mapCustomers&quot;. To get a customer with key &quot;Jack&quot; you should first set the namespace with command &quot;ns mapCustomers&quot;. Then you can take the object by &quot;m.get Jack&quot; Here is the command list:</p>
+<pre><code>-- General commands
+echo true|false                      //turns on/off echo of commands (default false)
+silent true|false                    //turns on/off silent of command output (default false)
+#&lt;number&gt; &lt;command&gt;                  //repeats &lt;number&gt; time &lt;command&gt;, replace $i in &lt;command&gt; with current iteration (0..&lt;number-1&gt;)
+&amp;&lt;number&gt; &lt;command&gt;                  //forks &lt;number&gt; threads to execute &lt;command&gt;, replace $t in &lt;command&gt; with current thread number (0..&lt;number-1&gt;
+     When using #x or &amp;x, is is advised to use silent true as well.
+     When using &amp;x with m.putmany and m.removemany, each thread will get a different share of keys unless a start key index is specified
+jvm                                  //displays info about the runtime
+who                                  //displays info about the cluster
+whoami                               //displays info about this cluster member
+ns &lt;string&gt;                          //switch the namespace for using the distributed queue/map/set/list &lt;string&gt; (defaults to &quot;default&quot;
+@&lt;file&gt;                              //executes the given &lt;file&gt; script. Use &#39;//&#39; for comments in the script
+
+-- Queue commands
+q.offer &lt;string&gt;                     //adds a string object to the queue
+q.poll                               //takes an object from the queue
+q.offermany &lt;number&gt; [&lt;size&gt;]        //adds indicated number of string objects to the queue (&#39;obj&lt;i&gt;&#39; or byte[&lt;size&gt;])
+q.pollmany &lt;number&gt;                  //takes indicated number of objects from the queue
+q.iterator [remove]                  //iterates the queue, remove if specified
+q.size                               //size of the queue
+q.clear                              //clears the queue
+
+-- Set commands
+s.add &lt;string&gt;                       //adds a string object to the set
+s.remove &lt;string&gt;                    //removes the string object from the set
+s.addmany &lt;number&gt;                   //adds indicated number of string objects to the set (&#39;obj&lt;i&gt;&#39;)
+s.removemany &lt;number&gt;                //takes indicated number of objects from the set
+s.iterator [remove]                  //iterates the set, removes if specified
+s.size                               //size of the set
+s.clear                              //clears the set
+
+-- Lock commands
+lock &lt;key&gt;                           //same as Hazelcast.getLock(key).lock()
+tryLock &lt;key&gt;                        //same as Hazelcast.getLock(key).tryLock()
+tryLock &lt;key&gt; &lt;time&gt;                 //same as tryLock &lt;key&gt; with timeout in seconds
+unlock &lt;key&gt;                         //same as Hazelcast.getLock(key).unlock()
+
+-- Map commands
+m.put &lt;key&gt; &lt;value&gt;                  //puts an entry to the map
+m.remove &lt;key&gt;                       //removes the entry of given key from the map
+m.get &lt;key&gt;                          //returns the value of given key from the map
+m.putmany &lt;number&gt; [&lt;size&gt;] [&lt;index&gt;]//puts indicated number of entries to the map (&#39;key&lt;i&gt;&#39;:byte[&lt;size&gt;], &lt;index&gt;+(0..&lt;number&gt;)
+m.removemany &lt;number&gt; [&lt;index&gt;]      //removes indicated number of entries from the map (&#39;key&lt;i&gt;&#39;, &lt;index&gt;+(0..&lt;number&gt;)
+     When using &amp;x with m.putmany and m.removemany, each thread will get a different share of keys unless a start key &lt;index&gt; is specified
+m.keys                               //iterates the keys of the map
+m.values                             //iterates the values of the map
+m.entries                            //iterates the entries of the map
+m.iterator [remove]                  //iterates the keys of the map, remove if specified
+m.size                               //size of the map
+m.clear                              //clears the map
+m.destroy                            //destroys the map
+m.lock &lt;key&gt;                         //locks the key
+m.tryLock &lt;key&gt;                      //tries to lock the key and returns immediately
+m.tryLock &lt;key&gt; &lt;time&gt;               //tries to lock the key within given seconds
+m.unlock &lt;key&gt;                       //unlocks the key
+
+-- List commands:
+l.add &lt;string&gt;
+l.add &lt;index&gt; &lt;string&gt;
+l.contains &lt;string&gt;
+l.remove &lt;string&gt;
+l.remove &lt;index&gt;
+l.set &lt;index&gt; &lt;string&gt;
+l.iterator [remove]
+l.size
+l.clear
+-- IAtomicLong commands:
+a.get
+a.set &lt;long&gt;
+a.inc
+a.dec
+-- Executor Service commands:
+execute &lt;echo-input&gt;                //executes an echo task on random member
+execute0nKey    &lt;echo-input&gt; &lt;key&gt;      //executes an echo task on the member that owns the given key
+execute0nMember &lt;echo-input&gt; &lt;key&gt;  //executes an echo task on the member with given index
+execute0nMembers &lt;echo-input&gt;       //executes an echo task on all of the members</code></pre>
+<p><img src="images/console.jpg" alt=""></p>
 
 
 

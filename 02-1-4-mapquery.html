@@ -949,52 +949,150 @@
 </div>
 
         <div id="content">
-            <a name="introduction"></a><h1>Introduction</h1>
-<p>Hazelcast is a clustering and highly scalable data distribution platform for Java. Hazelcast helps architects and developers to easily design and develop faster, highly scalable and reliable applications for their businesses.</p>
+            <a name="query"></a><h3>Query</h3>
+<p>Hazelcast partitions your data and spreads across cluster of servers. You can surely iterate over the map entries and look for certain entries you are interested in but this is not very efficient as you will have to bring entire entry set and iterate locally. Instead, Hazelcast allows you to run distributed queries on your distributed map.</p>
+<p>Let&#39;s say you have a &quot;employee&quot; map containing values of <code>Employee</code> objects:</p>
+<pre><code class="lang-java">import java.io.Serializable;
+
+public class Employee implements Serializable {
+private String name;
+private int age;
+private boolean active;
+private double salary;
+
+public Employee(String name, int age, boolean live, double price) {
+    this.name = name;
+    this.age = age;
+    this.active = live;
+    this.salary = price;
+}
+
+public Employee() {
+}
+
+public String getName() {
+    return name;
+}
+
+public int getAge() {
+    return age;
+}
+
+public double getSalary() {
+    return salary;
+}
+
+public boolean isActive() {
+    return active;
+}
+}</code></pre>
+<p>Now you are looking for the employees who are active and with age less than 30. Hazelcast allows you to find these entries in two different ways:</p>
+<p><strong>Distributed SQL Query</strong></p>
+<p><code>SqlPredicate</code> takes regular SQL where clause. Here is an example:</p>
+<pre><code class="lang-java">import com.hazelcast.core.IMap;
+import com.hazelcast.query.SqlPredicate;
+
+Config cfg = new Config();
+HazelcastInstance hz = Hazelcast.newHazelcastInstance(cfg);
+IMap map = hz.getMap(&quot;employee&quot;);
+
+Set&lt;Employee&gt; employees = (Set&lt;Employee&gt;) map.values(new SqlPredicate(&quot;active AND age &lt; 30&quot;));</code></pre>
+<p>Supported SQL syntax:</p>
 <ul>
-<li><p>Distributed implementations of <code>java.util.{Queue, Set, List, Map}</code></p>
+<li><p>AND/OR</p>
+<ul>
+<li><p><code>&lt;expression&gt; AND &lt;expression&gt; AND &lt;expression&gt;...</code></p>
+<ul>
+<li><p><code>active AND age&gt;30</code></p>
 </li>
-<li><p>Distributed implementation of <code>java.util.concurrent.ExecutorService</code></p>
+<li><p><code>active=false OR age = 45 OR name = &#39;Joe&#39;</code></p>
 </li>
-<li><p>Distributed implementation of <code>java.util.concurrency.locks.Lock</code></p>
-</li>
-<li><p>Distributed <code>Topic</code> for publish/subscribe messaging</p>
-</li>
-<li><p>Transaction support and J2EE container integration via JCA</p>
-</li>
-<li><p>Distributed listeners and events</p>
-</li>
-<li><p>Support for cluster info and membership events</p>
-</li>
-<li><p>Dynamic HTTP session clustering</p>
-</li>
-<li><p>Dynamic clustering</p>
-</li>
-<li><p>Dynamic scaling to hundreds of servers</p>
-</li>
-<li><p>Dynamic partitioning with backups</p>
-</li>
-<li><p>Dynamic fail-over</p>
-</li>
-<li><p>Super simple to use; include a single jar</p>
-</li>
-<li><p>Super fast; thousands of operations per sec.</p>
-</li>
-<li><p>Super small; less than a MB</p>
-</li>
-<li><p>Super efficient; very nice to CPU and RAM</p>
+<li><p><code>active AND (age &gt;20 OR salary &lt; 60000)</code></p>
 </li>
 </ul>
-<p>To install Hazelcast:</p>
-<ul>
-<li><p>Download hazelcast-_version_.zip from <a href="http://www.hazelcast.com">www.hazelcast.com</a></p>
-</li>
-<li><p>Unzip hazelcast-_version_.zip file</p>
-</li>
-<li><p>Add hazelcast.jar file into your classpath</p>
 </li>
 </ul>
-<p>Hazelcast is pure Java. JVMs that are running Hazelcast will dynamically cluster. Although by default Hazelcast will use multicast for discovery, it can also be configured to only use TCP/IP for environments where multicast is not available or preferred (<a href="#configuring-tcpip-cluster">Click here for more info</a>). Communication among cluster members is always TCP/IP with Java NIO beauty. Default configuration comes with 1 backup so if one node fails, no data will be lost. It is as simple as using<code>java.util.{Queue, Set, List, Map}</code>. Just add the hazelcast.jar into your classpath and start coding.</p>
+</li>
+<li><p><code>=, !=, &lt;, &lt;=, &gt;, &gt;=</code></p>
+<ul>
+<li><p><code>&lt;expression&gt; = value</code></p>
+<ul>
+<li><p><code>age &lt;= 30</code></p>
+</li>
+<li><p><code>name =&quot;Joe&quot;</code></p>
+</li>
+<li><p><code>salary != 50000</code></p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>BETWEEN</p>
+<ul>
+<li><p><code>&lt;attribute&gt; [NOT] BETWEEN &lt;value1&gt; AND &lt;value2&gt;</code></p>
+<ul>
+<li><p><code>age BETWEEN 20 AND 33 (same as age &gt;=20  AND age&lt;=33)</code></p>
+</li>
+<li><p><code>age NOT BETWEEN 30 AND 40 (same as age &lt;30 OR age&gt;40)</code></p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>LIKE</p>
+<ul>
+<li><p><code>&lt;attribute&gt; [NOT] LIKE &#39;expression&#39;</code></p>
+<p><code>%</code> (percentage sign) is placeholder for many characters, <code>_</code> (underscore) is placeholder for only one character.</p>
+<ul>
+<li><p><code>name LIKE &#39;Jo%&#39;</code> (true for &#39;Joe&#39;, &#39;Josh&#39;, &#39;Joseph&#39; etc.)</p>
+</li>
+<li><p><code>name LIKE &#39;Jo_&#39;</code> (true for &#39;Joe&#39;; false for &#39;Josh&#39;)</p>
+</li>
+<li><p><code>name NOT LIKE &#39;Jo_&#39;</code> (true for &#39;Josh&#39;; false for &#39;Joe&#39;)</p>
+</li>
+<li><p><code>name LIKE &#39;J_s%&#39;</code> (true for &#39;Josh&#39;, &#39;Joseph&#39;; false &#39;John&#39;, &#39;Joe&#39;)</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>IN</p>
+<ul>
+<li><p><code>&lt;attribute&gt; [NOT] IN (val1, val2,...)</code></p>
+<ul>
+<li><p><code>age IN (20, 30, 40)</code></p>
+</li>
+<li><p><code>age NOT IN (60, 70)</code></p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>Examples:</p>
+<ul>
+<li><p><code>active AND (salary &gt;= 50000 OR (age NOT BETWEEN 20 AND 30))</code></p>
+</li>
+<li><p><code>age IN (20, 30, 40) AND salary BETWEEN (50000, 80000)</code></p>
+</li>
+</ul>
+<p><strong>Criteria API</strong></p>
+<p>If SQL is not enough or programmable queries are preferred then JPA criteria like API can be used. Here is an example:</p>
+<pre><code class="lang-java">import com.hazelcast.core.IMap;
+import com.hazelcast.query.Predicate;
+import com.hazelcast.query.PredicateBuilder;
+import com.hazelcast.query.EntryObject;
+import com.hazelcast.config.Config;
+
+
+Config cfg = new Config();
+HazelcastInstance hz = Hazelcast.newHazelcastInstance(cfg);
+IMap map = hz.getMap(&quot;employee&quot;);
+
+EntryObject e = new PredicateBuilder().getEntryObject();
+Predicate predicate = e.is(&quot;active&quot;).and(e.get(&quot;age&quot;).lessThan(30));
+
+Set&lt;Employee&gt; employees = (Set&lt;Employee&gt;) map.values(predicate);</code></pre>
 
 
 

@@ -949,52 +949,25 @@
 </div>
 
         <div id="content">
-            <a name="introduction"></a><h1>Introduction</h1>
-<p>Hazelcast is a clustering and highly scalable data distribution platform for Java. Hazelcast helps architects and developers to easily design and develop faster, highly scalable and reliable applications for their businesses.</p>
-<ul>
-<li><p>Distributed implementations of <code>java.util.{Queue, Set, List, Map}</code></p>
-</li>
-<li><p>Distributed implementation of <code>java.util.concurrent.ExecutorService</code></p>
-</li>
-<li><p>Distributed implementation of <code>java.util.concurrency.locks.Lock</code></p>
-</li>
-<li><p>Distributed <code>Topic</code> for publish/subscribe messaging</p>
-</li>
-<li><p>Transaction support and J2EE container integration via JCA</p>
-</li>
-<li><p>Distributed listeners and events</p>
-</li>
-<li><p>Support for cluster info and membership events</p>
-</li>
-<li><p>Dynamic HTTP session clustering</p>
-</li>
-<li><p>Dynamic clustering</p>
-</li>
-<li><p>Dynamic scaling to hundreds of servers</p>
-</li>
-<li><p>Dynamic partitioning with backups</p>
-</li>
-<li><p>Dynamic fail-over</p>
-</li>
-<li><p>Super simple to use; include a single jar</p>
-</li>
-<li><p>Super fast; thousands of operations per sec.</p>
-</li>
-<li><p>Super small; less than a MB</p>
-</li>
-<li><p>Super efficient; very nice to CPU and RAM</p>
-</li>
-</ul>
-<p>To install Hazelcast:</p>
-<ul>
-<li><p>Download hazelcast-_version_.zip from <a href="http://www.hazelcast.com">www.hazelcast.com</a></p>
-</li>
-<li><p>Unzip hazelcast-_version_.zip file</p>
-</li>
-<li><p>Add hazelcast.jar file into your classpath</p>
-</li>
-</ul>
-<p>Hazelcast is pure Java. JVMs that are running Hazelcast will dynamically cluster. Although by default Hazelcast will use multicast for discovery, it can also be configured to only use TCP/IP for environments where multicast is not available or preferred (<a href="#configuring-tcpip-cluster">Click here for more info</a>). Communication among cluster members is always TCP/IP with Java NIO beauty. Default configuration comes with 1 backup so if one node fails, no data will be lost. It is as simple as using<code>java.util.{Queue, Set, List, Map}</code>. Just add the hazelcast.jar into your classpath and start coding.</p>
+            <a name="rest-client"></a><h2>Rest Client</h2>
+<p>Let&#39;s say your cluster&#39;s members are:</p>
+<pre><code>Members [5] {
+    Member [10.20.17.1:5701]
+    Member [10.20.17.2:5701]
+    Member [10.20.17.4:5701]
+    Member [10.20.17.3:5701]
+    Member [10.20.17.5:5701]
+ }</code></pre>
+<p>And you have a distributed map named &#39;stocks&#39;. You can put a new <code>key1/value1</code> entry into this map by issuing <code>HTTP POST</code> call to <code>http://10.20.17.1:5701/hazelcast/rest/maps/stocks/key1</code> URL. Your http post call&#39;s content body should contain the value (value1). You can retrieve this entry via <code>HTTP GET</code> call to <code>http://10.20.17.1:5701/hazelcast/rest/maps/stocks/key1</code>. You can also retrieve this entry from another member such as<code>http://10.20.17.3:5701/hazelcast/rest/maps/stocks/key1</code>.</p>
+<p>RESTful access is provided through any member of your cluster. So you can even put an HTTP load-balancer in-front of your cluster members for load-balancing and fault-tolerance.</p>
+<p>Now go ahead and install a REST plugin for your browser and explore further.</p>
+<p>Hazelcast also stores the mime-type of your <code>POST</code> request if it contains any. So if, for example, you post binary of an image file and set the mime-type of the <code>HTTP POST</code> request to <code>image/jpeg</code> then this mime-type will be part of the response of your <code>HTTP GET</code> request for that entry.</p>
+<p>Let&#39;s say you also have a task queue named &#39;tasks&#39;. You can offer a new item into the queue via HTTP POST and take and item from the queue via HTTP DELETE.</p>
+<p><code>HTTP POST http://10.20.17.1:5701/hazelcast/rest/queues/tasks &lt;CONTENT&gt;</code> means</p>
+<pre><code class="lang-java">Hazelcast.getQueue(&quot;tasks&quot;).offer(&lt;CONTENT&gt;);</code></pre>
+<p>and <code>HTTP DELETE http://10.20.17.1:5701/hazelcast/rest/queues/tasks/3</code> means</p>
+<pre><code class="lang-java">Hazelcast.getQueue(&quot;tasks&quot;).poll(3, SECONDS);</code></pre>
+<p>Note that you will have to handle the failures on REST polls as there is no transactional guarantee.</p>
 
 
 

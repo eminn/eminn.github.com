@@ -949,52 +949,85 @@
 </div>
 
         <div id="content">
-            <a name="introduction"></a><h1>Introduction</h1>
-<p>Hazelcast is a clustering and highly scalable data distribution platform for Java. Hazelcast helps architects and developers to easily design and develop faster, highly scalable and reliable applications for their businesses.</p>
+            <a name="distributed-queue"></a><h2>Distributed Queue</h2>
+<p>Hazelcast distributed queue is an implementation of <code>java.util.concurrent.BlockingQueue</code>.</p>
+<pre><code class="lang-java">import com.hazelcast.core.Hazelcast;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
+import com.hazelcast.config.Config;
+
+Config cfg = new Config();
+HazelcastInstance hz = Hazelcast.newHazelcastInstance(cfg);
+BlockingQueue&lt;MyTask&gt; q = hz.getQueue(&quot;tasks&quot;);
+q.put(new MyTask());
+MyTask task = q.take();
+
+boolean offered = q.offer(new MyTask(), 10, TimeUnit.SECONDS);
+task = q.poll (5, TimeUnit.SECONDS);
+if (task != null) {
+    //process task
+}</code></pre>
+<p>FIFO ordering will apply to all queue operations cluster-wide. User objects (such as <code>MyTask</code> in the example above), that are (en/de)queued have to be <code>Serializable</code>. By configuring max-size for queue one can obtain a bounded queue.</p>
+<p>Sample configuration:</p>
+<pre><code class="lang-xml">&lt;hazelcast&gt;
+    ...
+    &lt;queue name=&quot;tasks&quot;&gt;
+        &lt;!--
+            Maximum size of the queue. When queue size reaches the maximum,
+            all put operations will get blocked until the queue size
+            goes down below the maximum.
+            Any integer between 0 and Integer.MAX_VALUE. 0 means Integer.MAX_VALUE. Default is 0.
+        --&gt;
+        &lt;max-size&gt;10000&lt;/max-size&gt;
+
+        &lt;!--
+        Number of backups. If 1 is set as the backup-count for example,
+        then all entries of the map will be copied to another JVM for
+        fail-safety. Valid numbers are 0 (no backup), 1, 2 ... 6.
+        Default is 1.
+        --&gt;
+        &lt;backup-count&gt;1&lt;/backup-count&gt;
+
+        &lt;!--
+            Number of async backups. 0 means no backup.
+        --&gt;
+        &lt;async-backup-count&gt;0&lt;/async-backup-count&gt;
+
+        &lt;!--
+            QueueStore implementation to persist items.
+            &#39;binary&#39; property indicates that storing items will be in binary format
+            &#39;memory-limit&#39; property enables &#39;overflow to store&#39; after reaching limit
+            &#39;bulk-load&#39; property enables bulk-loading from store
+        --&gt;
+        &lt;queue-store&gt;
+            &lt;class-name&gt;com.hazelcast.QueueStore&lt;/class-name&gt;
+            &lt;properties&gt;
+                &lt;property name=&quot;binary&quot;&gt;false&lt;/property&gt;
+                &lt;property name=&quot;memory-limit&quot;&gt;1000&lt;/property&gt;
+                &lt;property name=&quot;bulk-load&quot;&gt;250&lt;/property&gt;
+            &lt;/properties&gt;
+        &lt;/queue-store&gt;
+    &lt;/queue&gt;
+&lt;/hazelcast&gt;</code></pre>
+<a name="persistence"></a><h3>Persistence</h3>
+<p>Hazelcast allows you to load and store the distributed queue entries from/to a persistent datastore such as relational database via a queue-store. If queue store is enabled then each entry added to queue will also be stored to configured queue store. When the number of items in queue exceed the memory limit, items will only persisted to queue store, they will not stored in queue memory. Here the queue store configuration options:</p>
 <ul>
-<li><p>Distributed implementations of <code>java.util.{Queue, Set, List, Map}</code></p>
-</li>
-<li><p>Distributed implementation of <code>java.util.concurrent.ExecutorService</code></p>
-</li>
-<li><p>Distributed implementation of <code>java.util.concurrency.locks.Lock</code></p>
-</li>
-<li><p>Distributed <code>Topic</code> for publish/subscribe messaging</p>
-</li>
-<li><p>Transaction support and J2EE container integration via JCA</p>
-</li>
-<li><p>Distributed listeners and events</p>
-</li>
-<li><p>Support for cluster info and membership events</p>
-</li>
-<li><p>Dynamic HTTP session clustering</p>
-</li>
-<li><p>Dynamic clustering</p>
-</li>
-<li><p>Dynamic scaling to hundreds of servers</p>
-</li>
-<li><p>Dynamic partitioning with backups</p>
-</li>
-<li><p>Dynamic fail-over</p>
-</li>
-<li><p>Super simple to use; include a single jar</p>
-</li>
-<li><p>Super fast; thousands of operations per sec.</p>
-</li>
-<li><p>Super small; less than a MB</p>
-</li>
-<li><p>Super efficient; very nice to CPU and RAM</p>
-</li>
+<li>Binary:
+By default Hazelcast stores queue items in serialized form in memory and before inserting into datastore deserializes them. But if you will not reach the queue store from an external application you can prefer the items to be inserted in binary form. So you get rid of de-serialization step that is a performance optimization. By default binary feature is not enabled.</li>
+<li>Memory Limit:
+This is the number of items after which Hazelcast will just store items to datastore. For example if memory limit is 1000, then 1001st item will be just put into datastore. This feature is useful when you want to avoid out-of-memory conditions. Default number for memory limit is 1000. If you want to always use memory you can set it to Integer.MAX_VALUE.</li>
+<li>Bulk Load:
+At initialization of queue, items are loaded from QueueStore in bulks. Bulk load is the size these bulks. By default it is 250.</li>
 </ul>
-<p>To install Hazelcast:</p>
-<ul>
-<li><p>Download hazelcast-_version_.zip from <a href="http://www.hazelcast.com">www.hazelcast.com</a></p>
-</li>
-<li><p>Unzip hazelcast-_version_.zip file</p>
-</li>
-<li><p>Add hazelcast.jar file into your classpath</p>
-</li>
-</ul>
-<p>Hazelcast is pure Java. JVMs that are running Hazelcast will dynamically cluster. Although by default Hazelcast will use multicast for discovery, it can also be configured to only use TCP/IP for environments where multicast is not available or preferred (<a href="#configuring-tcpip-cluster">Click here for more info</a>). Communication among cluster members is always TCP/IP with Java NIO beauty. Default configuration comes with 1 backup so if one node fails, no data will be lost. It is as simple as using<code>java.util.{Queue, Set, List, Map}</code>. Just add the hazelcast.jar into your classpath and start coding.</p>
+<p>Here an example queue store configuration:</p>
+<pre><code class="lang-xml">&lt;queue-store&gt;
+    &lt;class-name&gt;com.hazelcast.QueueStoreImpl&lt;/class-name&gt;
+    &lt;properties&gt;
+        &lt;property name=&quot;binary&quot;&gt;false&lt;/property&gt;
+        &lt;property name=&quot;memory-limit&quot;&gt;10000&lt;/property&gt;
+        &lt;property name=&quot;bulk-load&quot;&gt;500&lt;/property&gt;
+    &lt;/properties&gt;
+&lt;/queue-store&gt;</code></pre>
 
 
 
